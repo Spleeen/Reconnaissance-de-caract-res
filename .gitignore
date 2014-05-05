@@ -1,0 +1,28 @@
+# Compiled source #
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.d
+*.so
+bin/
+
+# OS generated files #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+~$*
+web/*
+moc_*.cpp
+ui_*.h
+*.app
+*.pro.user*
+*qmake*
+Makefile
+*autosave
+carac_recognize
