@@ -23,6 +23,5 @@ ui_*.h
 *.app
 *.pro.user*
 *qmake*
-Makefile
 *autosave
 carac_recognize
