@@ -3,6 +3,13 @@
 #include <stdexcept>
 #include "Matrixi.h"
 
+// - Ne pas mettre de unsigned partout:
+//      - Dù à un bug de gcc sse n'est pas utilisé avec des unsigned, le code n'estdonc pas optimisé avec des unsigned
+//      - C'est chiant a utilisé et cause des bugs
+// - Ne pas mettre le mot clef inline dans les cpp car par définition inline implique que le contenu des fonctions se trouve dans le .h
+// - Proposer une transposition inplace qui ne crée pas de nouvelle matrice pour aller plus vite
+// - Mettre certaine fonction en inline dans le .h
+
 using namespace std;
 
 //Matrix initialize with null values
@@ -16,7 +23,7 @@ Matrixi::Matrixi(unsigned int nbrows, unsigned int nbcolumns, bool clear): _rows
     {   
         for(unsigned int i=0 ; i < _rows; ++i)
             for(unsigned int j=0 ; j < _cols; ++j)
-                this->setValue(i, j, 0);
+                this->set(i, j, 0);
     }
 }
 
@@ -27,13 +34,12 @@ Matrixi& Matrixi::operator= (const Matrixi& mat1)
         _cols = mat1._cols;
         for(unsigned int i=0 ; i < _rows; ++i)
             for(unsigned int j=0 ; j < _cols; ++j)
-                this->setValue(i,j, mat1(i,j));
+                this->set(i,j, mat1(i,j));
     }
 
     return *this;
 }
 
-inline
 bool Matrixi::operator== (const Matrixi& mat)
 {
     if ((_rows != mat._rows)
@@ -48,13 +54,11 @@ bool Matrixi::operator== (const Matrixi& mat)
     return true;    
 }
 
-inline
 bool Matrixi::operator!= (const Matrixi& mat)
 {
     return !(*this == mat);    
 }
 
-inline
 int& Matrixi::operator() (unsigned int row, unsigned int col)
 {
     #ifndef NDEBUG
@@ -65,7 +69,6 @@ int& Matrixi::operator() (unsigned int row, unsigned int col)
     return _values[_cols*row + col];
 }
 
-inline
 int Matrixi::operator() (unsigned int row, unsigned int col) const
 {
     #ifndef NDEBUG
@@ -74,6 +77,14 @@ int Matrixi::operator() (unsigned int row, unsigned int col) const
         throw out_of_range("const Matrix subscript out of bounds");
     #endif  //NDEBUG
     return _values[_cols*row + col];
+}
+
+//Matrix transpose
+void Matrixi::clear(int value)
+{
+    for(unsigned int i=0 ; i < _cols ; ++i)
+        for(unsigned int j=0 ; j < _rows ; ++j)
+            set(i,j,value);
 }
 
 //Matrix transpose
@@ -89,9 +100,10 @@ Matrixi Matrixi::transpose()
 }
 
 //Matrix multiplication
+// Note la matrice mult doit forcément être initialisée à zero.
 Matrixi Matrixi::mult(const Matrixi& mat)
 {
-    Matrixi mult (_rows, _cols);
+    Matrixi mult (_rows, _cols, true);
 
     if(_cols != mat._rows)
         throw new domain_error("Matrix type not compatible for multiplication"); 
@@ -100,8 +112,8 @@ Matrixi Matrixi::mult(const Matrixi& mat)
     #pragma omp parallel for
     #endif
     for (unsigned int i = 0; i < _rows; ++i)
-        for (unsigned int j = 0; j < _cols; ++j)
-            for (unsigned int k = 0; k < _rows; ++k)
+        for (unsigned int k = 0; k < _rows; ++k)
+            for (unsigned int j = 0; j < _cols; ++j)
                 mult(i,j) += this->at(i,j) * mat(k,j);
 
     return mult;
@@ -122,32 +134,36 @@ Matrixi Matrixi::add(const Matrixi& mat)
     return add;
 }
 
-Matrixi Matrixi::toIdMatrix()
+Matrixi Matrixi::identity(unsigned int rows, unsigned int cols)
 {
-    Matrixi identity (_rows, _cols); 
+    Matrixi identity (rows, cols); 
 
-    for (unsigned int i = 0; i < _rows; ++i){
-        identity.setValue(i, i, 1);
-    }
+    for (unsigned int i = 0; i < rows; ++i)
+        identity.set(i, i, 1);
+
+    return identity;
+}
+
+Matrixi Matrixi::identity(const Matrixi& mat)
+{
+    Matrixi identity (mat._rows, mat._cols); 
+
+    for (unsigned int i = 0; i < mat._rows; ++i)
+        identity.set(i, i, 1);
 
     return identity;
 }
 
 
 //Getters & Setters
-int Matrixi::getValue(const unsigned int i, const unsigned int j)
-{
-    return this->at(i,j);
-}
-    
-void Matrixi::setValue(const unsigned int  i, const unsigned int j, int value)
-{
-    this->setValue(i, j, value);
-}
-
-int Matrixi::at(unsigned int i, unsigned int j)
+int Matrixi::at(const unsigned int i, const unsigned int j)
 {
     return operator()(i,j);
+}
+    
+void Matrixi::set(const unsigned int  i, const unsigned int j, int value)
+{
+    operator()(i,j) = value;
 }
 
 unsigned int Matrixi::getNbRows()

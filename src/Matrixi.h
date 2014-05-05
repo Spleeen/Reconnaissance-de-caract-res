@@ -22,6 +22,9 @@ public:
     int& operator() (unsigned int nbrows, unsigned int nbcolumns);
     int  operator() (unsigned int nbrows, unsigned int nbcolumns) const;
 
+    //Matrix clear
+    void clear(int value = 0);
+
     //Matrix transpose
     Matrixi transpose();
 
@@ -31,12 +34,12 @@ public:
     //Matrix multiplication
     Matrixi mult(const Matrixi& mat);
 
-    Matrixi toIdMatrix();
+    static Matrixi identity(unsigned int rows, unsigned int cols);
+    static Matrixi identity(const Matrixi& mat);
 
     //Getters & Setters
-    int getValue(const unsigned int i, const unsigned int j);
-    void setValue(const unsigned int i, const unsigned int j, int value);
     int at(unsigned int i, unsigned int j);
+    void set(const unsigned int i, const unsigned int j, int value);
     unsigned int getNbRows();
     unsigned int getNbCols();
 

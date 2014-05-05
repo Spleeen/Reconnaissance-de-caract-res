@@ -1,5 +1,7 @@
 #include "Matrixi.h"
 #include <iostream>
+using namespace std;
+
 int main()
 {
     Matrixi mat (8, 8);
@@ -7,9 +9,9 @@ int main()
 
     for(unsigned int i=0 ; i<mat.getNbRows() ; i++)
         for(unsigned int j=0 ; j<mat.getNbCols(); j++)
-            mat.setValue(i, j, i * mat.getNbCols() + j);
+            mat.set(i, j, i * mat.getNbCols() + j);
 
-    mat.show();/*
+    mat.show();
     std::cout <<std::endl;
     mat_result = mat.transpose();
     mat_result.show();
@@ -27,8 +29,8 @@ int main()
     mat_result.show();
     std::cout <<std::endl;
 
-    mat_result = mat.toIdMatrix();
+    mat_result = Matrixi::identity(mat);
     mat_result.show();
-    std::cout <<std::endl;*/
+    std::cout <<std::endl;
     return 0;
 }
