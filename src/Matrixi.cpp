@@ -1,12 +1,14 @@
 #include <iostream>
 #include <omp.h>
 #include <stdexcept>
+#include <string.h>
 #include "Matrixi.h"
+#include "Utilities.h"
 
 using namespace std;
 
 //Matrix initialize with null values
-Matrixi::Matrixi(unsigned int nbrows, unsigned int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns)
+Matrixi::Matrixi (unsigned int nbrows, unsigned int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns)
 {
     if (nbrows <= 0 || nbcolumns <= 0)
         throw new domain_error("Matrix can't have a zero size");
@@ -20,15 +22,28 @@ Matrixi::Matrixi(unsigned int nbrows, unsigned int nbcolumns, bool clear): _rows
     }
 }
 
-Matrixi& Matrixi::operator= (const Matrixi& mat1)
-{
-    if(*this != mat1){
-        _rows = mat1._rows;
-        _cols = mat1._cols;
-        for(unsigned int i=0 ; i < _rows; ++i)
-            for(unsigned int j=0 ; j < _cols; ++j)
-                this->set(i,j, mat1(i,j));
+Matrixi::Matrixi(const Matrixi& mat) 
+{ 
+    this->_values = NULL;
+
+    if (mat._values != NULL) {
+            _values = new int[mat._rows*mat._cols];
+            if (!_values)
+                throw new std::bad_alloc();
+            memcpy(_values,mat._values, mat._rows*mat._cols * sizeof(int));
     }
+
+    this->_rows = mat._rows;
+    this->_cols = mat._cols;
+} 
+
+Matrixi& Matrixi::operator= (const Matrixi& mat)
+{
+    Matrixi tmp (mat);
+
+    std::swap(this->_rows, tmp._rows); 
+    std::swap(this->_cols, tmp._cols); 
+    std::swap(this->_values, tmp._values); 
 
     return *this;
 }
@@ -39,12 +54,12 @@ bool Matrixi::operator== (const Matrixi& mat)
         || (_cols != mat._cols))
         return false;
     
-    for(unsigned int i=0 ; i < _rows; ++i)
-        for(unsigned int j=0 ; j < _cols; ++j)
-            if (this->at(i,j) != mat(i,j))
-                return false;
+    for(unsigned int i=0; i < mat._rows; ++i)
+        for(unsigned int j=0; j < mat._cols; ++j)
+                if (this->at(i,j) != mat(i,j))
+                    return false;
 
-    return true;    
+    return true;
 }
 
 bool Matrixi::operator!= (const Matrixi& mat)
@@ -72,8 +87,28 @@ int Matrixi::operator() (unsigned int row, unsigned int col) const
     return _values[_cols*row + col];
 }
 
+Matrixi Matrixi::operator+ (const Matrixi& mat)
+{
+    return this->add(mat);
+}
+
+Matrixi& Matrixi::operator+= (const Matrixi& mat)
+{
+    return (*this = this->add(mat));
+}
+
+Matrixi Matrixi::operator* (const Matrixi& mat)
+{
+    return this->mult(mat);
+}
+
+Matrixi& Matrixi::operator*= (const Matrixi& mat)
+{
+    return (*this = this->mult(mat));
+}
+
 //Matrix transpose
-void Matrixi::clear(int value)
+void Matrixi::clear (int value)
 {
     for(unsigned int i=0 ; i < _cols ; ++i)
         for(unsigned int j=0 ; j < _rows ; ++j)
@@ -81,22 +116,22 @@ void Matrixi::clear(int value)
 }
 
 //Matrix transpose
-Matrixi Matrixi::transpose()
+Matrixi Matrixi::transpose ()
 {
-    Matrixi transposed (_cols, _rows);
+    Matrixi transposed (_cols, _rows, true);
 
     for(unsigned int i=0 ; i < _cols ; ++i)
-        for(unsigned int j=0 ; j < _rows ; ++j)
-            transposed(i,j) = at(j,i);
-
+        for(unsigned int j=0 ; j < _rows ; ++j){
+            transposed.set(i,j,at(j,i));
+        }
     return transposed;
 }
 
 //Matrix multiplication
 // Note la matrice mult doit forcément être initialisée à zero.
-Matrixi Matrixi::mult(const Matrixi& mat)
+Matrixi Matrixi::mult (const Matrixi& mat)
 {
-    Matrixi mult (_rows, _cols, true);
+    Matrixi mult (_rows, _cols,true);
 
     if(_cols != mat._rows)
         throw new domain_error("Matrix type not compatible for multiplication"); 
@@ -113,10 +148,12 @@ Matrixi Matrixi::mult(const Matrixi& mat)
 }
 
 //Matrix addition
-Matrixi Matrixi::add(const Matrixi& mat)
+Matrixi Matrixi::add (const Matrixi& mat)
 {
     Matrixi add (_rows, _cols); 
 
+    if(_cols != mat._cols || _rows != mat._rows)
+        throw new domain_error("Matrix type not compatible for addition"); 
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
@@ -127,7 +164,7 @@ Matrixi Matrixi::add(const Matrixi& mat)
     return add;
 }
 
-Matrixi Matrixi::identity(unsigned int rows, unsigned int cols)
+Matrixi Matrixi::identity (unsigned int rows, unsigned int cols)
 {
     Matrixi identity (rows, cols); 
 
@@ -137,7 +174,7 @@ Matrixi Matrixi::identity(unsigned int rows, unsigned int cols)
     return identity;
 }
 
-Matrixi Matrixi::identity(const Matrixi& mat)
+Matrixi Matrixi::identity (const Matrixi& mat)
 {
     Matrixi identity (mat._rows, mat._cols); 
 
@@ -149,29 +186,35 @@ Matrixi Matrixi::identity(const Matrixi& mat)
 
 
 //Getters & Setters
-int Matrixi::at(const unsigned int i, const unsigned int j)
+int Matrixi::at (const unsigned int i, const unsigned int j)
 {
     return operator()(i,j);
 }
     
-void Matrixi::set(const unsigned int  i, const unsigned int j, int value)
+void Matrixi::set (const unsigned int  i, const unsigned int j, int value)
 {
     operator()(i,j) = value;
 }
 
-unsigned int Matrixi::getNbRows()
+unsigned int Matrixi::getNbRows ()
 {
     return _rows;
 }
 
-unsigned int Matrixi::getNbCols()
+unsigned int Matrixi::getNbCols ()
 {
     return _cols;
 }
 
 //Matrix display
-void Matrixi::show(int coutwidth)
+void Matrixi::show (unsigned int coutwidth)
 {
+    cout <<"Matrix " <<_rows <<"x" <<_cols <<endl;
+
+    for(unsigned int i=0 ; i <= _cols*coutwidth+1; ++i)
+            cout <<"=";
+    cout <<endl;   
+
     for(unsigned int i=0 ; i < _rows; ++i)
     {
         cout <<"[";
@@ -188,7 +231,7 @@ void Matrixi::show(int coutwidth)
 }
 
 //Destructor
-Matrixi::~Matrixi()
+Matrixi::~Matrixi ()
 {
     delete[] _values;
 }
