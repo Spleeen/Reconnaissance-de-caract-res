@@ -3,13 +3,6 @@
 #include <stdexcept>
 #include "Matrixi.h"
 
-// - Ne pas mettre de unsigned partout:
-//      - Dù à un bug de gcc sse n'est pas utilisé avec des unsigned, le code n'estdonc pas optimisé avec des unsigned
-//      - C'est chiant a utilisé et cause des bugs
-// - Ne pas mettre le mot clef inline dans les cpp car par définition inline implique que le contenu des fonctions se trouve dans le .h
-// - Proposer une transposition inplace qui ne crée pas de nouvelle matrice pour aller plus vite
-// - Mettre certaine fonction en inline dans le .h
-
 using namespace std;
 
 //Matrix initialize with null values
