@@ -11,7 +11,7 @@ using namespace std;
 Matrixi::Matrixi (unsigned int nbrows, unsigned int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns)
 {
     if (nbrows <= 0 || nbcolumns <= 0)
-        throw new domain_error("Matrix can't have a zero size");
+        throw domain_error("Matrix can't have a zero size");
     _values = new int[nbrows * nbcolumns];
 
     if (clear)
@@ -39,12 +39,14 @@ Matrixi::Matrixi(const Matrixi& mat)
 
 Matrixi& Matrixi::operator= (const Matrixi& mat)
 {
-    Matrixi tmp (mat);
+    if (this != &mat){
 
-    std::swap(this->_rows, tmp._rows); 
-    std::swap(this->_cols, tmp._cols); 
-    std::swap(this->_values, tmp._values); 
+        Matrixi tmp (mat);
 
+        std::swap(this->_rows, tmp._rows); 
+        std::swap(this->_cols, tmp._cols); 
+        std::swap(this->_values, tmp._values); 
+    }
     return *this;
 }
 
@@ -131,18 +133,18 @@ Matrixi Matrixi::transpose ()
 // Note la matrice mult doit forcément être initialisée à zero.
 Matrixi Matrixi::mult (const Matrixi& mat)
 {
-    Matrixi mult (_rows, _cols,true);
+    if(_cols != mat._rows || _rows != mat._cols)
+        throw domain_error("Matrix type not compatible for multiplication"); 
 
-    if(_cols != mat._rows)
-        throw new domain_error("Matrix type not compatible for multiplication"); 
+    Matrixi mult (_rows, _cols, true);
 
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
     for (unsigned int i = 0; i < _rows; ++i)
-        for (unsigned int k = 0; k < _rows; ++k)
-            for (unsigned int j = 0; j < _cols; ++j)
-                mult(i,j) += this->at(i,j) * mat(k,j);
+        for(unsigned int k = 0; k < _rows; ++k)
+            for(unsigned int j = 0; j < _cols; ++j)
+                mult(i,j) += this->at(i,k) * mat(k,j);
 
     return mult;
 }
@@ -150,10 +152,11 @@ Matrixi Matrixi::mult (const Matrixi& mat)
 //Matrix addition
 Matrixi Matrixi::add (const Matrixi& mat)
 {
+    if(_cols != mat._cols || _rows != mat._rows)
+        throw domain_error("Matrix type not compatible for addition. Both matrices must have the same number of rows and columns"); 
+
     Matrixi add (_rows, _cols); 
 
-    if(_cols != mat._cols || _rows != mat._rows)
-        throw new domain_error("Matrix type not compatible for addition"); 
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
@@ -166,16 +169,14 @@ Matrixi Matrixi::add (const Matrixi& mat)
 
 Matrixi Matrixi::identity (unsigned int rows, unsigned int cols)
 {
-    Matrixi identity (rows, cols); 
-
-    for (unsigned int i = 0; i < rows; ++i)
-        identity.set(i, i, 1);
-
-    return identity;
+    return identity(Matrixi (rows, cols));
 }
 
 Matrixi Matrixi::identity (const Matrixi& mat)
 {
+    if(mat._rows != mat._cols)
+        throw domain_error("Matrix type not compatible for identity. Matrix must be square"); 
+
     Matrixi identity (mat._rows, mat._cols); 
 
     for (unsigned int i = 0; i < mat._rows; ++i)
@@ -217,7 +218,7 @@ void Matrixi::show (unsigned int coutwidth)
 
     for(unsigned int i=0 ; i < _rows; ++i)
     {
-        cout <<"[";
+        cout <<"|";
         cout.width(coutwidth);
         cout <<(*this)(i, 0);
     
@@ -226,7 +227,7 @@ void Matrixi::show (unsigned int coutwidth)
             cout.width(coutwidth);
             cout << std::right <<this->at(i,j);
         }
-        cout <<"]" <<endl;
+        cout <<"|" <<endl;
     }
 }
 

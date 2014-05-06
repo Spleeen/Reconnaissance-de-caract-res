@@ -4,7 +4,7 @@ using namespace std;
 
 int main()
 {
-    Matrixi mat (10, 15);
+    Matrixi mat (10, 10);
     Matrixi mat_result (8, 12);
 
     for(unsigned int i=0 ; i<mat.getNbRows() ; i++)
@@ -22,9 +22,11 @@ int main()
     copy.show();
     std::cout <<std::endl;
 
-    mat_result = copy;
+    mat_result = Matrixi::identity(10,10);
     mat_result.show();
     std::cout <<std::endl;
 
+    mat_result.mult(mat).show();
+    std::cout <<std::endl;
     return 0;
 }
