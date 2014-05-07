@@ -9,24 +9,28 @@
 #ifndef MATRIXI_H
 #define MATRIXI_H
 
+#include <iostream>
+
 class Matrixi {
 
 public:
     //Constructors
-    Matrixi(unsigned int nbrows, unsigned int nbcolumns, bool clear = true);
+    Matrixi(int nbrows, int nbcolumns, bool clear = true);
     Matrixi(const Matrixi& mat);
 
     //Operators override
     Matrixi& operator= (const Matrixi &mat1); 
     bool operator== (const Matrixi& mat);
     bool operator!= (const Matrixi& mat);
-    int& operator() (unsigned int nbrows, unsigned int nbcolumns);
-    int operator() (unsigned int nbrows, unsigned int nbcolumns) const;
+    int& operator() (int nbrows, int nbcolumns);
+    int operator() (int nbrows, int nbcolumns) const;
     Matrixi operator+ (const Matrixi& mat);
     Matrixi& operator+= (const Matrixi& mat);
     Matrixi operator* (const Matrixi& mat);
+    template<typename NumericType> NumericType operator* (const NumericType op);
     Matrixi& operator*= (const Matrixi& mat);
-
+    template<typename NumericType> NumericType& operator*= (const NumericType op);
+    friend std::ostream& operator << (std::ostream& out, const Matrixi& mat);
     //Matrix clear
     void clear(int value = 0);
 
@@ -38,24 +42,57 @@ public:
 
     //Matrix multiplication
     Matrixi mult(const Matrixi& mat);
+    template<typename NumericType> Matrixi mult (const NumericType op);
 
-    static Matrixi identity(unsigned int rows, unsigned int cols);
+    static Matrixi identity(int rows, int cols);
     static Matrixi identity(const Matrixi& mat);
 
     //Getters & Setters
-    int at(unsigned int i, unsigned int j);
-    void set(const unsigned int i, const unsigned int j, int value);
-    unsigned int getNbRows();
-    unsigned int getNbCols();
+    int at(int i, int j);
+    void set(const int i, const int j, int value);
+    int getNbRows() const;
+    int getNbCols() const;
+    static int getCoutWidth();
+    static void setCoutWidth(const int width);
 
     //Matrix display
-    void show(unsigned int coutwidth = 6);
+    void show (int coutwidth = COUTWIDTH);  
     //Destructor
     ~Matrixi();
 
 private:
-    unsigned int _rows, _cols;
+    int _rows, _cols;
     int* _values;
+
+    static int COUTWIDTH;
+
 };
+
+template<typename NumericType> 
+NumericType  Matrixi::operator* (const NumericType op)
+{
+    return this->mult(op);
+}
+
+template<typename NumericType> 
+NumericType& Matrixi::operator*= (const NumericType op)
+{
+    return (*this = this->mult(op));
+}
+
+template<typename NumericType> 
+Matrixi Matrixi::mult (const NumericType op)
+{
+    Matrixi mult (_rows, _cols, true);
+
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int i = 0; i < _rows; ++i)
+            for(int j = 0; j < _cols; ++j)
+                mult(i,j) += (int)(this->at(i,j) * op);
+
+    return mult;
+}
 
 #endif //MATRIXI_H

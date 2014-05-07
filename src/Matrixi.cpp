@@ -1,14 +1,15 @@
-#include <iostream>
+#include "Matrixi.h"
+#include "Utilities.h"
 #include <omp.h>
 #include <stdexcept>
 #include <string.h>
-#include "Matrixi.h"
-#include "Utilities.h"
 
 using namespace std;
 
+int Matrixi::COUTWIDTH = 8;
+
 //Matrix initialize with null values
-Matrixi::Matrixi (unsigned int nbrows, unsigned int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns)
+Matrixi::Matrixi (int nbrows, int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns)
 {
     if (nbrows <= 0 || nbcolumns <= 0)
         throw domain_error("Matrix can't have a zero size");
@@ -16,8 +17,8 @@ Matrixi::Matrixi (unsigned int nbrows, unsigned int nbcolumns, bool clear): _row
 
     if (clear)
     {   
-        for(unsigned int i=0 ; i < _rows; ++i)
-            for(unsigned int j=0 ; j < _cols; ++j)
+        for(int i=0 ; i < _rows; ++i)
+            for(int j=0 ; j < _cols; ++j)
                 this->set(i, j, 0);
     }
 }
@@ -56,8 +57,8 @@ bool Matrixi::operator== (const Matrixi& mat)
         || (_cols != mat._cols))
         return false;
     
-    for(unsigned int i=0; i < mat._rows; ++i)
-        for(unsigned int j=0; j < mat._cols; ++j)
+    for(int i=0; i < mat._rows; ++i)
+        for(int j=0; j < mat._cols; ++j)
                 if (this->at(i,j) != mat(i,j))
                     return false;
 
@@ -69,7 +70,7 @@ bool Matrixi::operator!= (const Matrixi& mat)
     return !(*this == mat);    
 }
 
-int& Matrixi::operator() (unsigned int row, unsigned int col)
+int& Matrixi::operator() (int row, int col)
 {
     #ifndef NDEBUG
     if (row >= _rows || col >= _cols
@@ -79,7 +80,7 @@ int& Matrixi::operator() (unsigned int row, unsigned int col)
     return _values[_cols*row + col];
 }
 
-int Matrixi::operator() (unsigned int row, unsigned int col) const
+int Matrixi::operator() (int row, int col) const
 {
     #ifndef NDEBUG
     if (row >= _rows || col >= _cols
@@ -109,11 +110,36 @@ Matrixi& Matrixi::operator*= (const Matrixi& mat)
     return (*this = this->mult(mat));
 }
 
+ostream& operator << (ostream& out, const Matrixi& mat)
+{
+    out <<"Matrix " <<mat.getNbRows() <<"x" <<mat.getNbCols() <<endl;
+
+    for(int i=0 ; i <= mat.getNbCols()*Matrixi::COUTWIDTH+1; ++i)
+            out <<"=";
+    out <<endl;   
+
+    for(int i=0 ; i < mat.getNbRows(); ++i)
+    {
+        out <<"|";
+        out.width(Matrixi::COUTWIDTH);
+        out <<mat(i, 0);
+    
+        for(int j=1 ; j < mat.getNbCols(); ++j)
+        {
+            out.width(Matrixi::COUTWIDTH);
+            out << std::right <<mat(i,j);
+        }
+        out <<"|" <<endl;
+    }
+
+    return out;
+}
+
 //Matrix transpose
 void Matrixi::clear (int value)
 {
-    for(unsigned int i=0 ; i < _cols ; ++i)
-        for(unsigned int j=0 ; j < _rows ; ++j)
+    for(int i=0 ; i < _cols ; ++i)
+        for(int j=0 ; j < _rows ; ++j)
             set(i,j,value);
 }
 
@@ -122,8 +148,8 @@ Matrixi Matrixi::transpose ()
 {
     Matrixi transposed (_cols, _rows, true);
 
-    for(unsigned int i=0 ; i < _cols ; ++i)
-        for(unsigned int j=0 ; j < _rows ; ++j){
+    for(int i=0 ; i < _cols ; ++i)
+        for(int j=0 ; j < _rows ; ++j){
             transposed.set(i,j,at(j,i));
         }
     return transposed;
@@ -141,9 +167,9 @@ Matrixi Matrixi::mult (const Matrixi& mat)
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-    for (unsigned int i = 0; i < _rows; ++i)
-        for(unsigned int k = 0; k < _rows; ++k)
-            for(unsigned int j = 0; j < _cols; ++j)
+    for (int i = 0; i < _rows; ++i)
+        for(int k = 0; k < _rows; ++k)
+            for(int j = 0; j < _cols; ++j)
                 mult(i,j) += this->at(i,k) * mat(k,j);
 
     return mult;
@@ -160,14 +186,14 @@ Matrixi Matrixi::add (const Matrixi& mat)
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-    for (unsigned int i = 0; i < _rows; ++i)
-        for (unsigned int j = 0; j < _cols; ++j)
+    for (int i = 0; i < _rows; ++i)
+        for (int j = 0; j < _cols; ++j)
             add(i,j) = this->at(i,j) + mat(i,j);
 
     return add;
 }
 
-Matrixi Matrixi::identity (unsigned int rows, unsigned int cols)
+Matrixi Matrixi::identity (int rows, int cols)
 {
     return identity(Matrixi (rows, cols));
 }
@@ -179,7 +205,7 @@ Matrixi Matrixi::identity (const Matrixi& mat)
 
     Matrixi identity (mat._rows, mat._cols); 
 
-    for (unsigned int i = 0; i < mat._rows; ++i)
+    for (int i = 0; i < mat._rows; ++i)
         identity.set(i, i, 1);
 
     return identity;
@@ -187,42 +213,52 @@ Matrixi Matrixi::identity (const Matrixi& mat)
 
 
 //Getters & Setters
-int Matrixi::at (const unsigned int i, const unsigned int j)
+int Matrixi::at (const int i, const int j)
 {
     return operator()(i,j);
 }
     
-void Matrixi::set (const unsigned int  i, const unsigned int j, int value)
+void Matrixi::set (const int  i, const int j, int value)
 {
     operator()(i,j) = value;
 }
 
-unsigned int Matrixi::getNbRows ()
+int Matrixi::getNbRows () const
 {
     return _rows;
 }
 
-unsigned int Matrixi::getNbCols ()
+int Matrixi::getNbCols () const
 {
     return _cols;
 }
 
+int Matrixi::getCoutWidth() 
+{
+    return Matrixi::COUTWIDTH;
+}
+
+void Matrixi::setCoutWidth(const int nbDigit)
+{
+    Matrixi::COUTWIDTH = nbDigit+1;
+}
+
 //Matrix display
-void Matrixi::show (unsigned int coutwidth)
+void Matrixi::show (int coutwidth)
 {
     cout <<"Matrix " <<_rows <<"x" <<_cols <<endl;
 
-    for(unsigned int i=0 ; i <= _cols*coutwidth+1; ++i)
+    for(int i=0 ; i <= _cols*coutwidth+1; ++i)
             cout <<"=";
     cout <<endl;   
 
-    for(unsigned int i=0 ; i < _rows; ++i)
+    for(int i=0 ; i < _rows; ++i)
     {
         cout <<"|";
         cout.width(coutwidth);
-        cout <<(*this)(i, 0);
+        cout <<this->at(i, 0);
     
-        for(unsigned int j=1 ; j < _cols; ++j)
+        for(int j=1 ; j < _cols; ++j)
         {
             cout.width(coutwidth);
             cout << std::right <<this->at(i,j);
