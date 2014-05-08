@@ -90,24 +90,24 @@ int Matrixi::operator() (int row, int col) const
     return _values[_cols*row + col];
 }
 
-Matrixi Matrixi::operator+ (const Matrixi& mat)
+Matrixi operator+ (const Matrixi& mat1, const Matrixi& mat2)
 {
-    return this->add(mat);
+    return mat1.add(mat2);
 }
 
-Matrixi& Matrixi::operator+= (const Matrixi& mat)
+Matrixi& operator+= (Matrixi& mat1, const Matrixi& mat2)
 {
-    return (*this = this->add(mat));
+    return (mat1 = mat1.add(mat2));
 }
 
-Matrixi Matrixi::operator* (const Matrixi& mat)
+Matrixi operator* (const Matrixi& mat1, const Matrixi& mat2)
 {
-    return this->mult(mat);
+    return mat1.mult(mat2);
 }
 
-Matrixi& Matrixi::operator*= (const Matrixi& mat)
+Matrixi& operator*= (Matrixi& mat1, const Matrixi& mat2)
 {
-    return (*this = this->mult(mat));
+    return (mat1 = mat1.mult(mat2));
 }
 
 ostream& operator << (ostream& out, const Matrixi& mat)
@@ -144,7 +144,7 @@ void Matrixi::clear (int value)
 }
 
 //Matrix transpose
-Matrixi Matrixi::transpose ()
+Matrixi Matrixi::transpose () const
 {
     Matrixi transposed (_cols, _rows, true);
 
@@ -157,7 +157,7 @@ Matrixi Matrixi::transpose ()
 
 //Matrix multiplication
 // Note la matrice mult doit forcément être initialisée à zero.
-Matrixi Matrixi::mult (const Matrixi& mat)
+Matrixi Matrixi::mult (const Matrixi& mat) const
 {
     if(_cols != mat._rows || _rows != mat._cols)
         throw domain_error("Matrix type not compatible for multiplication"); 
@@ -176,7 +176,7 @@ Matrixi Matrixi::mult (const Matrixi& mat)
 }
 
 //Matrix addition
-Matrixi Matrixi::add (const Matrixi& mat)
+Matrixi Matrixi::add (const Matrixi& mat) const
 {
     if(_cols != mat._cols || _rows != mat._rows)
         throw domain_error("Matrix type not compatible for addition. Both matrices must have the same number of rows and columns"); 
@@ -193,27 +193,46 @@ Matrixi Matrixi::add (const Matrixi& mat)
     return add;
 }
 
-Matrixi Matrixi::identity (int rows, int cols)
+Matrixi Matrixi::pow (const int p) const
 {
-    return identity(Matrixi (rows, cols));
+    if(!this->isSquare())
+        throw domain_error("Matrix type not compatible for pow operation. Matrix must be square"); 
+
+    if (p == 0)
+        return Matrixi::identity (_rows, _cols);
+    else if (p == 1)
+        return *this;
+    else if (p%2 == 0){
+        Matrixi powmat(_rows, _cols, false);
+        powmat = this->pow(p/2);
+        return powmat*powmat;
+    }
+    else if (p%2 == 1){
+        Matrixi powmat(_rows, _cols, false);
+        powmat = this->pow (p/2);
+        return powmat*powmat**this;
+    }
+    else 
+        throw domain_error("For the moment, this library don't manage negative or float pow. As soon as possible !"); 
+
+    return *this;
 }
 
-Matrixi Matrixi::identity (const Matrixi& mat)
+Matrixi Matrixi::identity (const int rows, const int cols)
 {
-    if(mat._rows != mat._cols)
+    if(rows != cols)
         throw domain_error("Matrix type not compatible for identity. Matrix must be square"); 
 
-    Matrixi identity (mat._rows, mat._cols); 
+    Matrixi identity (rows, cols); 
 
-    for (int i = 0; i < mat._rows; ++i)
+    for (int i = 0; i < rows; ++i)
         identity.set(i, i, 1);
 
     return identity;
 }
 
-
 //Getters & Setters
-int Matrixi::at (const int i, const int j)
+int Matrixi::at (const int i, const int j) const
 {
     return operator()(i,j);
 }
@@ -233,7 +252,7 @@ int Matrixi::getNbCols () const
     return _cols;
 }
 
-int Matrixi::getCoutWidth() 
+int Matrixi::getCoutWidth()
 {
     return Matrixi::COUTWIDTH;
 }
@@ -243,8 +262,13 @@ void Matrixi::setCoutWidth(const int nbDigit)
     Matrixi::COUTWIDTH = nbDigit+1;
 }
 
+bool Matrixi::isSquare () const
+{
+    return (_cols == _rows);
+}
+
 //Matrix display
-void Matrixi::show (int coutwidth)
+void Matrixi::show (int coutwidth) const
 {
     cout <<"Matrix " <<_rows <<"x" <<_cols <<endl;
 

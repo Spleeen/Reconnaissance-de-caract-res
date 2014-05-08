@@ -24,39 +24,29 @@ public:
     bool operator!= (const Matrixi& mat);
     int& operator() (int nbrows, int nbcolumns);
     int operator() (int nbrows, int nbcolumns) const;
-    Matrixi operator+ (const Matrixi& mat);
-    Matrixi& operator+= (const Matrixi& mat);
-    Matrixi operator* (const Matrixi& mat);
-    template<typename NumericType> NumericType operator* (const NumericType op);
-    Matrixi& operator*= (const Matrixi& mat);
-    template<typename NumericType> NumericType& operator*= (const NumericType op);
     friend std::ostream& operator << (std::ostream& out, const Matrixi& mat);
-    //Matrix clear
+
+    Matrixi transpose() const;
+    Matrixi add(const Matrixi& mat) const;
+    Matrixi mult(const Matrixi& mat) const;
+    template<typename NumericType> Matrixi mult (const NumericType op) const;
+    Matrixi pow (const int p) const;
+
+    static Matrixi identity(const int rows, const int cols);
     void clear(int value = 0);
 
-    //Matrix transpose
-    Matrixi transpose();
-
-    //Matrix addition
-    Matrixi add(const Matrixi& mat);
-
-    //Matrix multiplication
-    Matrixi mult(const Matrixi& mat);
-    template<typename NumericType> Matrixi mult (const NumericType op);
-
-    static Matrixi identity(int rows, int cols);
-    static Matrixi identity(const Matrixi& mat);
-
     //Getters & Setters
-    int at(int i, int j);
+    int at(int i, int j) const;
     void set(const int i, const int j, int value);
     int getNbRows() const;
     int getNbCols() const;
     static int getCoutWidth();
     static void setCoutWidth(const int width);
 
+    bool isSquare () const;
+
     //Matrix display
-    void show (int coutwidth = COUTWIDTH);  
+    void show (int coutwidth = COUTWIDTH) const;  
     //Destructor
     ~Matrixi();
 
@@ -65,23 +55,36 @@ private:
     int* _values;
 
     static int COUTWIDTH;
-
 };
 
 template<typename NumericType> 
-NumericType  Matrixi::operator* (const NumericType op)
+Matrixi operator* (const NumericType op, const Matrixi& mat)
 {
-    return this->mult(op);
+    return mat.mult(op);
 }
 
 template<typename NumericType> 
-NumericType& Matrixi::operator*= (const NumericType op)
+Matrixi operator* (const Matrixi& mat, const NumericType op)
 {
-    return (*this = this->mult(op));
+    return mat.mult(op);
 }
 
 template<typename NumericType> 
-Matrixi Matrixi::mult (const NumericType op)
+Matrixi& operator*= (const NumericType op, Matrixi& mat)
+{
+    return (mat = mat.mult(op));
+}
+
+
+template<typename NumericType> 
+Matrixi& operator*= (Matrixi& mat,const NumericType op)
+{
+    return (mat = mat.mult(op));
+}
+
+
+template<typename NumericType> 
+Matrixi Matrixi::mult (const NumericType op) const
 {
     Matrixi mult (_rows, _cols, true);
 
