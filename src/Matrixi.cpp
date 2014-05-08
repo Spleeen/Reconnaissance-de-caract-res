@@ -9,7 +9,7 @@ using namespace std;
 int Matrixi::COUTWIDTH = 8;
 
 //Matrix initialize with null values
-Matrixi::Matrixi (int nbrows, int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns)
+Matrixi::Matrixi (int nbrows, int nbcolumns, bool clear): _rows(nbrows), _cols(nbcolumns), _values(NULL)
 {
     if (nbrows <= 0 || nbcolumns <= 0)
         throw domain_error("Matrix can't have a zero size");
@@ -23,19 +23,15 @@ Matrixi::Matrixi (int nbrows, int nbcolumns, bool clear): _rows(nbrows), _cols(n
     }
 }
 
-Matrixi::Matrixi(const Matrixi& mat) 
+Matrixi::Matrixi(const Matrixi& mat) : _rows(mat.getNbRows()), _cols(mat.getNbCols()), _values(NULL)
 { 
-    this->_values = NULL;
 
     if (mat._values != NULL) {
-            _values = new int[mat._rows*mat._cols];
+            _values = new int[_rows*_cols];
             if (!_values)
                 throw new std::bad_alloc();
-            memcpy(_values,mat._values, mat._rows*mat._cols * sizeof(int));
+            memcpy(_values,mat._values, _rows*_cols * sizeof(int));
     }
-
-    this->_rows = mat._rows;
-    this->_cols = mat._cols;
 } 
 
 Matrixi& Matrixi::operator= (const Matrixi& mat)

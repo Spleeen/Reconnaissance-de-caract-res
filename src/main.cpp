@@ -4,12 +4,9 @@ using namespace std;
 
 int main()
 {
-    Matrixi m (24,24);
+    Matrixi m (4096,4096);
 
-    for (int i = 0; i < m.getNbCols(); ++i)
-         for (int j = 0; j < m.getNbRows(); ++j)
-            m(i,j) = i*m.getNbCols()+j;
-    cout <<Matrixi::identity(4,4).pow(2)<<endl;
+     m = m.mult(m);
 /*
     mat.show();
     std::cout <<std::endl;

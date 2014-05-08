@@ -2,8 +2,8 @@
 # Cours : Intelligence Artificielle
 # Projet : Reconnaissance de caractères via un réseau de Hopfield
 # Date de création : 4 janvier 2006
-# Date de version : 5 mai 2014
-# Version 1.8
+# Date de version : 8 mai 2014
+# Version 1.9
 
 CC=g++	
 PREFIX = .
@@ -16,7 +16,8 @@ OBJ = $(SRC:.cpp=.o)
 DEPENDS = $(SRC:.cpp=.d)
 
 #CFLAGS += `pkg-config --cflags sdl SDL_image` -fopenmp -O3 -pedantic -Wall -Wextra
-CXXFLAGS += -DNDEBUG -fopenmp -O3 -Wall -Wno-narrowing -pedantic -Wextra -Woverloaded-virtual -Wfloat-equal -Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wundef -Wlong-long -Werror -Wconversion -Wextra -std=c++11 #-Weffc++ # -Wshadow 
+#NDEBUG = RELEASE
+CXXFLAGS += -O3 -fopenmp -DNDEBUG -fdiagnostics-color=auto -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual -Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual -Wunknown-pragmas -Wmissing-include-dirs -Winline -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel -Winvalid-pch -Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror -Wconversion -Wextra -std=c++11 -Weffc++
 LDFLAGS += -fopenmp #-lm -lpthread -D_REENTRANT
 
 .PHONY : run clean mrproper
