@@ -93,7 +93,7 @@ Matrixi Matrixi::mult (const NumericType op) const
     #endif
     for (int i = 0; i < _rows; ++i)
             for(int j = 0; j < _cols; ++j)
-                mult(i,j) += (int)(this->at(i,j) * op);
+                mult(i,j) += this->at(i,j) * op;
 
     return mult;
 }

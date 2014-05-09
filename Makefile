@@ -17,7 +17,12 @@ DEPENDS = $(SRC:.cpp=.d)
 
 #CFLAGS += `pkg-config --cflags sdl SDL_image` -fopenmp -O3 -pedantic -Wall -Wextra
 #NDEBUG = RELEASE
-CXXFLAGS += -O3 -fopenmp -DNDEBUG -fdiagnostics-color=auto -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual -Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual -Wunknown-pragmas -Wmissing-include-dirs -Winline -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel -Winvalid-pch -Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror -Wconversion -Wextra -std=c++11 -Weffc++
+#-Wfatal-errors : le compilateur s'arrêtera à la 1ère erreur rencontrée (ici un simple warning)
+CXXFLAGS += -O3 -fopenmp -DNDEBUG -fdiagnostics-color=auto -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual \
+-Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual \
+-Wunknown-pragmas -Wmissing-include-dirs -Winline -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel -Winvalid-pch \
+-Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror -Wconversion \
+-std=c++11 -Weffc++ -Wold-style-cast -Wcast-align -Wdouble-promotion -Wlogical-op -Wfatal-errors
 LDFLAGS += -fopenmp #-lm -lpthread -D_REENTRANT
 
 .PHONY : run clean mrproper
