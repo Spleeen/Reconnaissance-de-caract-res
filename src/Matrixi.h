@@ -1,11 +1,11 @@
 /*
 *   Created by N.Richard
 *   Date de création : 5 mai 2014
-*   Date de version : 5 mai 2014
-*   Version 0.1
+*   Date de version : 10 mai 2014
+*   Version 0.4
 *   Principe : Bibliothèque simple pour la gestion de matrices (forme coplien)
 */
-
+ 
 #ifndef MATRIXI_H
 #define MATRIXI_H
 
