@@ -151,6 +151,7 @@ Matrixi Matrixi::transpose () const
     return transposed;
 }
 
+
 //Matrix multiplication
 // Note la matrice mult doit forcément être initialisée à zero.
 Matrixi Matrixi::mult (const Matrixi& mat) const
