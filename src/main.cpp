@@ -9,8 +9,8 @@ int main()
     Matrix<float> m (10,10);
 
      m = Matrix<float>::identity(10,10);
-     m.set(5,5, float(1.0));
-     cout <<m <<endl<<m.isNull();
+     m.set(4,5, float(1.2));
+     cout <<m <<endl<<m.isLowerTriangular();
 /*
     mat.show();
     std::cout <<std::endl;

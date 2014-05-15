@@ -64,9 +64,19 @@ public:
         return true;
     }
 
-    bool operator!= (const Matrix& mat)
+    bool operator!= (const Matrix& mat) const
     {
         return !(*this == mat);    
+    }
+
+    bool operator!() const 
+    {
+        return isNull();
+    }
+    
+    Matrix operator~() const 
+    {
+        return transpose();
     }
 
     T& operator() (int nbrows, int nbcolumns)
@@ -263,6 +273,32 @@ public:
                 if (!equal(at(i,j), 0))
                     return false;
 
+        return true;
+    }
+
+    bool isUpperTriangular() const
+    {
+        if (!isSquare())
+            return false;
+
+        for(int i = 1; i < _rows; ++i)
+            for (int j = 0; i != j && j < _cols ; ++j)
+                if (!equal(at(i,j), 0))
+                    return false;
+
+        return true;
+    }
+
+    bool isLowerTriangular() const
+    {
+        if (!isSquare())
+            return false;
+
+        for(int i = 0; i < _rows; ++i)
+            for (int j = i+1; j < _cols ; ++j)
+                if (!equal(at(i,j), 0))
+                    return false;
+                
         return true;
     }
 
