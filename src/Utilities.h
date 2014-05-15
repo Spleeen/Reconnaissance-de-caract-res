@@ -15,6 +15,7 @@
 
 #include <sstream>
 #include <stdlib.h>
+#include <math.h>
 #ifdef WIN32
 	#include <time.h>
 	#include <sys/timeb.h>
@@ -28,7 +29,7 @@
 #endif
 
 #include <fstream>
- 
+
 /*****************************************
 	Paramètre inutilisés (passer -Wall)
 *****************************************/
@@ -93,5 +94,9 @@ bool isReadable (const std::string& filePath);
 #define min(A, B) (((A)<(B)) ? (A) : (B))
 #define max(A, B) (((A)<(B)) ? (B) : (A))
 #define limitRange(value, downLimit, upLimit) min(max((value), (downLimit)), (upLimit))
+
+//Comparaison "sure" des nombres à virgules flottantes
+#define EPSILON 1e-12 
+#define equal(A,B) (fabs(A - B) < EPSILON)
 
 #endif //UTILITIES_H

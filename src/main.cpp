@@ -1,12 +1,16 @@
-#include "Matrixi.h"
+#include "Matrix.h"
 #include <iostream>
 using namespace std;
 
+typedef bool dd;
+
 int main()
 {
-    Matrixi m (4096,4096);
+    Matrix<float> m (10,10);
 
-     m = m.mult(m);
+     m = Matrix<float>::identity(10,10);
+     m.set(5,5, float(1.0));
+     cout <<m <<endl<<m.isNull();
 /*
     mat.show();
     std::cout <<std::endl;
@@ -15,18 +19,18 @@ int main()
 
     std::cout <<std::endl;
 
-    Matrixi copy (mat);
+    Matrix copy (mat);
     copy.show();
     std::cout <<std::endl;
 
     mat_result.show();
     std::cout <<std::endl;
-
-    Matrixi::setCoutWidth(9);
+    
+    Matrix::setCoutWidth(9);
     std::cout <<mat.transpose() <<endl;
     std::cout <<mat.transpose()+mat.transpose().mult((double)121145.52424424244246225252525662424242).mult(2).add(mat.transpose()) <<endl;
 */
-    //cout <<mat <<Matrixi::identity(4,4).pow(1243232323);
+    //cout <<mat <<Matrix::identity(4,4).pow(1243232323);
     
     return 0;
 }
