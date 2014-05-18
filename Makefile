@@ -26,7 +26,7 @@ CXX_DEBUG_FLAGS := -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual \
 
 GCC_VER_MAJOR := $(shell $(CC) -dumpversion | cut -f1 -d.)
 GCC_VER_MINOR := $(shell $(CC) -dumpversion | cut -f2 -d.)
-GCC_VER_GT_4_9 := $(shell test $(GCC_VER_MAJOR) -gt 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -gt 9 \) && echo true)
+GCC_VER_GT_4_9 := $(shell test $(GCC_VER_MAJOR) -gt 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -ge 9 \) && echo true)
 
 ifeq ($(GCC_VER_GT_4_9),true)
 	CXXFLAGS += -fdiagnostics-color=auto
@@ -37,10 +37,7 @@ LDFLAGS += -fopenmp #-lm -lpthread -D_REENTRANT $(shell pkg-config --libs sdl) -
 
 .PHONY : all debug release run clean mrproper
 
-all: regledemerde release
-
-regledemerde:
-	@echo $(GCC_VER_GT_4_9)
+all: release
 
 debug: CXXFLAGS += $(CXX_DEBUG_FLAGS) 
 debug: $(EXEC)
