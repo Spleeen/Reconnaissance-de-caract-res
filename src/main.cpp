@@ -8,9 +8,10 @@ int main()
 {
     Matrix<float> m (10,10);
 
-     m = Matrix<float>::identity(10,10);
+     m = Matrix<float>::identity(10);
      m.set(4,5, float(1.2));
-     cout <<m <<endl<<m.isLowerTriangular();
+     Matrix<float> m2 (m);
+     cout <<m <<endl<<(m .pow(30));
 /*
     mat.show();
     std::cout <<std::endl;

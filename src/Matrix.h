@@ -10,56 +10,60 @@
 #define MATRIX_H
 
 #include "Utilities.h"
-#include <omp.h>
+#ifdef _OPENMP
+    #include <omp.h>
+#endif //_OPENMP
 #include <iostream>
 #include <stdexcept>
 #include <string.h>
-
+ 
 template <typename T>
 class Matrix {
 
 public:
     //Constructors
-    Matrix (int nbrows, int nbcolumns): _rows(nbrows), _cols(nbcolumns), _values(NULL)
+    Matrix (int nbrows, int nbcolumns): m_rows(nbrows), m_cols(nbcolumns), m_values(NULL)
     {
         if (nbrows <= 0 || nbcolumns <= 0)
             throw std::domain_error("Matrix can't have a zero size");
-        _values = new T[nbrows * nbcolumns]();
+        m_values = new T[nbrows * nbcolumns]();
     }
 
-    Matrix(const Matrix& mat) : _rows(mat.getNbRows()), _cols(mat.getNbCols()), _values(NULL)
+    Matrix(const Matrix& mat) : m_rows(mat.nbRows()), m_cols(mat.nbCols()), m_values(NULL)
     { 
 
-        if (mat._values != NULL) {
-                _values = new T[_rows*_cols]();
-                memcpy(_values,mat._values, _rows*_cols * sizeof(T));
+        if (mat.m_values != NULL) {
+                m_values = new T[m_rows*m_cols]();
+                memcpy(m_values,mat.m_values, m_rows*m_cols * sizeof(T));
         }
     } 
 
     //Operators override
     Matrix& operator= (const Matrix &mat)
     {
+        #ifndef NDEBUG
         if (this != &mat){
-
+        #endif  //NDEBUG
             Matrix tmp (mat);
 
-            std::swap(this->_rows, tmp._rows); 
-            std::swap(this->_cols, tmp._cols); 
-            std::swap(this->_values, tmp._values); 
+            m_rows = tmp.m_rows; 
+            m_cols = tmp.m_cols; 
+            std::swap(m_values, tmp.m_values); 
+        #ifndef NDEBUG
         }
+        #endif  //NDEBUG
+        
         return *this;
     }
 
     bool operator== (const Matrix& mat)
     {
-        if ((_rows != mat._rows)
-            || (_cols != mat._cols))
+        if ((m_rows != mat.m_rows)
+            || (m_cols != mat.m_cols))
             return false;
         
-        for(int i=0; i < mat._rows; ++i)
-            for(int j=0; j < mat._cols; ++j)
-                if (this->at(i,j) != mat(i,j))
-                    return false;
+        if (memcmp (m_values, mat.m_values, sizeof(*this)) != 0)
+            return false;
 
         return true;
     }
@@ -79,129 +83,125 @@ public:
         return transpose();
     }
 
-    T& operator() (int nbrows, int nbcolumns)
+    T& operator() (int row, int col)
     {
         #ifndef NDEBUG
-        if (nbrows >= _rows || nbcolumns >= _cols
-            || nbrows < 0 || nbcolumns < 0)
+        if (row >= m_rows || col >= m_cols
+            || row < 0 || col < 0)
             throw std::out_of_range("const Matrix subscript out of bounds");
         #endif  //NDEBUG
-        return _values[_cols*nbrows + nbcolumns];
+        return m_values[m_cols*row + col];
     }   
 
-    T operator() (int nbrows, int nbcolumns) const
+    T operator() (int row, int col) const
     {
         #ifndef NDEBUG
-        if (nbrows >= _rows || nbcolumns >= _cols
-            || nbrows < 0 || nbcolumns < 0)
+        if (row >= m_rows || col >= m_cols
+            || row < 0 || col < 0)
             throw std::out_of_range("const Matrix subscript out of bounds");
         #endif  //NDEBUG
-        return _values[_cols*nbrows + nbcolumns];
+        return m_values[m_cols*row + col];
     }
     
     Matrix transpose() const
     {
-        Matrix transposed (_cols, _rows);
+        Matrix transposeMat (m_cols, m_rows);
 
-        for(int i=0 ; i < _cols ; ++i)
-            for(int j=0 ; j < _rows ; ++j)
-                transposed.set(i,j,at(j,i));
+        for(int i=0 ; i < m_cols ; ++i)
+            for(int j=0 ; j < m_rows ; ++j)
+                transposeMat.set(i,j,at(j,i));
 
-        return transposed;
+        return transposeMat;
     }
 
     Matrix add(const Matrix& mat) const
     {
-        if(_cols != mat._cols || _rows != mat._rows)
+        if(m_cols != mat.m_cols || m_rows != mat.m_rows)
             throw std::domain_error("Matrix type not compatible for addition. Both matrices must have the same number of rows and columns"); 
 
-        Matrix add (_rows, _cols); 
+        Matrix addMat (m_rows, m_cols); 
 
         #ifdef _OPENMP
         #pragma omp parallel for
-        #endif
-        for (int i = 0; i < _rows; ++i)
-            for (int j = 0; j < _cols; ++j)
-                add(i,j) = this->at(i,j) + mat(i,j);
+        #endif //_OPENMP
+        for (int i = 0; i < m_rows; ++i)
+            for (int j = 0; j < m_cols; ++j)
+                addMat(i,j) = at(i,j) + mat(i,j);
 
-        return add;
+        return addMat;
     }
 
     Matrix mult(const Matrix& mat) const
     {
-        if(_cols != mat._rows || _rows != mat._cols)
+        if(m_cols != mat.m_rows || m_rows != mat.m_cols)
             throw std::domain_error("Matrix type not compatible for multiplication"); 
 
-        Matrix mult (_rows, _cols);
+        Matrix multMat (m_rows, m_cols);
 
         #ifdef _OPENMP
         #pragma omp parallel for
-        #endif
-        for (int i = 0; i < _rows; ++i)
-            for(int k = 0; k < _rows; ++k)
-                for(int j = 0; j < _cols; ++j)
-                    mult(i,j) += this->at(i,k) * mat(k,j);
+        #endif //_OPENMP
+        for (int i = 0; i < m_rows; ++i)
+            for(int k = 0; k < m_rows; ++k)
+                for(int j = 0; j < m_cols; ++j)
+                    multMat(i,j) += at(i,k) * mat(k,j);
 
-        return mult;
-    }
-
+        return multMat;
+    }   
+ 
     template <typename NumericType> 
-    Matrix mult (const NumericType op) const
+    Matrix mult (const NumericType scale) const
     {
-        Matrix mult (_rows, _cols);
+        Matrix multMat (m_rows, m_cols);
 
         #ifdef _OPENMP
         #pragma omp parallel for
-        #endif
-        for (int i = 0; i < _rows; ++i)
-            for(int j = 0; j < _cols; ++j)
-                mult(i,j) += this->at(i,j) * op;
+        #endif //_OPENMP
+        for (int i = 0; i < m_rows; ++i)
+            for(int j = 0; j < m_cols; ++j)
+                multMat(i,j) += at(i,j) * scale;
 
-        return mult;
+        return multMat;  
     }
-
+   
     Matrix pow (const int p) const
-    {
-        if(!this->isSquare())
+    {  
+        if(!isSquare())
             throw std::domain_error("Matrix type not compatible for pow operation. Matrix must be square"); 
-
         if (p == 0)
-            return Matrix::identity (_rows, _cols);
+            return Matrix::identity (m_rows);
         else if (p == 1)
-            return *this;
+            return *this; 
         else if (p%2 == 0){
-            Matrix powmat(_rows, _cols, false);
-            powmat = this->pow(p/2);
+            Matrix powmat(m_rows, m_cols);
+            powmat = pow(p/2);
             return powmat*powmat;
         }
         else if (p%2 == 1){
-            Matrix powmat(_rows, _cols, false);
-            powmat = this->pow (p/2);
+            Matrix powmat(m_rows, m_cols);
+            powmat = pow (p/2);
             return powmat*powmat**this;
-        }
+        }    
         else 
             throw std::domain_error("For the moment, this library don't manage negative or float pow. As soon as possible !"); 
 
         return *this;
-    }
+    } 
 
-    static Matrix identity(const int nbrows, const int nbcolumns)
+    static Matrix identity(const int size)
     {
-        if(nbrows != nbcolumns)
-            throw std::domain_error("Matrix type not compatible for identity. Matrix must be square"); 
+        Matrix identityMat (size, size); 
 
-        Matrix identity (nbrows, nbcolumns); 
+        for (int i = 0; i < size; ++i)
+            identityMat.set(i, i, static_cast<T>(1));
 
-        for (int i = 0; i < nbrows; ++i)
-            identity.set(i, i, static_cast<T>(1));
-
-        return identity;
+        return identityMat;
     }
 
     void clear(T value = 0)
     {
-        for(int i=0 ; i < _cols ; ++i)
-            for(int j=0 ; j < _rows ; ++j)
+        for(int i=0 ; i < m_cols ; ++i)
+            for(int j=0 ; j < m_rows ; ++j)
                 set(i,j,value);
     }
 
@@ -216,17 +216,22 @@ public:
         operator()(i,j) = value;
     }
     
-    int getNbRows() const
+    int nbRows() const
     {
-        return _rows;
+        return m_rows;
     }
 
-    int getNbCols() const
+    int nbCols() const
     {
-        return _cols;
+        return m_cols;
+    }
+
+    int nbElements() const
+    {
+        return m_cols*m_rows;
     }
     
-    static int getCoutWidth()
+    static int coutWidth()
     {
         return Matrix::COUTWIDTH;
     }
@@ -238,7 +243,7 @@ public:
 
     bool isSquare () const
     {
-        return (_cols == _rows);
+        return (m_cols == m_rows);
     }
 
     bool isIdentity() const
@@ -246,7 +251,7 @@ public:
         if (!isDiagonal())
             return false;
 
-        for(int i=0; i < _rows; ++i)
+        for(int i=0; i < m_rows; ++i)
             if(!equal(at(i,i),1))
                 return false;
 
@@ -254,12 +259,12 @@ public:
     }
 
     bool isDiagonal() const
-    {
+    {  
         if (!isSquare())
-            return false;
+            throw std::domain_error("Matrix type not compatible for pow operation. Matrix must be square"); 
 
-        for(int i=0; i < _rows; ++i)
-            for(int j=0; j < _cols; ++j)
+        for(int i=0; i < m_rows; ++i)
+            for(int j=0; j < m_cols; ++j)
                 if (i!=j && !equal(at(i,j),0))
                     return false;
 
@@ -268,8 +273,8 @@ public:
 
     bool isNull() const
     {
-        for(int i=0; i < _rows; ++i)
-            for(int j=0; j < _cols; ++j)
+        for(int i=0; i < m_rows; ++i)
+            for(int j=0; j < m_cols; ++j)
                 if (!equal(at(i,j), 0))
                     return false;
 
@@ -281,8 +286,8 @@ public:
         if (!isSquare())
             return false;
 
-        for(int i = 1; i < _rows; ++i)
-            for (int j = 0; i != j && j < _cols ; ++j)
+        for(int i = 1; i < m_rows; ++i)
+            for (int j = 0; i != j && j < m_cols ; ++j)
                 if (!equal(at(i,j), 0))
                     return false;
 
@@ -294,8 +299,8 @@ public:
         if (!isSquare())
             return false;
 
-        for(int i = 0; i < _rows; ++i)
-            for (int j = i+1; j < _cols ; ++j)
+        for(int i = 0; i < m_rows; ++i)
+            for (int j = i+1; j < m_cols ; ++j)
                 if (!equal(at(i,j), 0))
                     return false;
                 
@@ -303,40 +308,22 @@ public:
     }
 
     //Matrix display
-    void show (int coutwidth = COUTWIDTH) const
+    void show () const
     {
-        std::cout <<"Matrix " <<_rows <<"x" <<_cols <<std::endl;
-
-        for(int i=0 ; i <= _cols*coutwidth+1; ++i)
-            std::cout <<"=";
-        std::cout <<std::endl;   
-
-        for(int i=0 ; i < _rows; ++i)
-        {
-            std::cout <<"|";
-            std::cout.width(coutwidth);
-            std::cout <<this->at(i, 0);
-        
-            for(int j=1 ; j < _cols; ++j)
-            {
-                std::cout.width(coutwidth);
-                std::cout << std::right <<this->at(i,j);
-            }
-            std::cout <<"|" <<std::endl;
-        }
+        std::cout <<*this;    
     }
 
     //Destructor
     ~Matrix()
     {
-        delete[] _values;
+        delete[] m_values;
     }
 
     static int COUTWIDTH;
 
 private:
-    int _rows, _cols;
-    T* _values;
+    int m_rows, m_cols;
+    T* m_values;
 
 };
 
@@ -344,49 +331,49 @@ template<typename T>
 int Matrix<T>::COUTWIDTH = 8;
 
 template<typename T, typename NumericType> 
-Matrix<T> operator* (const NumericType op, const Matrix<T>& mat)
+Matrix<T> operator* (const NumericType scale, const Matrix<T>& mat)
 {
-    return mat.mult(op);
+    return mat.mult(scale);
 }
 
 template<typename T, typename NumericType> 
-Matrix<T> operator* (const Matrix<T>& mat, const NumericType op)
+Matrix<T> operator* (const Matrix<T>& mat, const NumericType scale)
 {
-    return mat.mult(op);
+    return mat.mult(scale);
 }
 
-template<typename T>
-Matrix<T> operator* (const Matrix<T>& mat1, const Matrix<T>& mat2)
+template<typename T, typename U>
+Matrix<T> operator* (const Matrix<T>& mat1, const Matrix<U>& mat2)
 {
     return mat1.mult(mat2);
 }
 
 template<typename T, typename NumericType> 
-Matrix<T>& operator*= (const NumericType op, Matrix<T>& mat)
+Matrix<T>& operator*= (const NumericType scale, Matrix<T>& mat)
 {
-    return (mat = mat.mult(op));
+    return (mat = mat.mult(scale));
 }
 
 template<typename T, typename NumericType> 
-Matrix<T>& operator*= (Matrix<T>& mat,const NumericType op)
+Matrix<T>& operator*= (Matrix<T>& mat,const NumericType scale)
 {
-    return (mat = mat.mult(op));
+    return (mat = mat.mult(scale));
 }
 
-template<typename T>
-Matrix<T>& operator*= (Matrix<T>& mat1, const Matrix<T>& mat2)
+template<typename T, typename U>
+Matrix<T>& operator*= (Matrix<T>& mat1, const Matrix<U>& mat2)
 {
     return (mat1 = mat1.mult(mat2));
 }
 
-template<typename T>
-Matrix<T> operator+ (const Matrix<T>& mat1, const Matrix<T>& mat2)
+template<typename T, typename U>
+Matrix<T> operator+ (const Matrix<T>& mat1, const Matrix<U>& mat2)
 {
     return mat1.add(mat2);
 }
 
-template<typename T>
-Matrix<T>& operator+= (Matrix<T>& mat1, const Matrix<T>& mat2)
+template<typename T, typename U>
+Matrix<T>& operator+= (Matrix<T>& mat1, const Matrix<U>& mat2)
 {
     return (mat1 = mat1.add(mat2));
 }
@@ -394,19 +381,19 @@ Matrix<T>& operator+= (Matrix<T>& mat1, const Matrix<T>& mat2)
 template <typename T>
 std::ostream& operator << (std::ostream& out, const Matrix<T>& mat)
 {
-    out <<"Matrix " <<mat.getNbRows() <<"x" <<mat.getNbCols() <<std::endl;
+    out <<"Matrix " <<mat.nbRows() <<"x" <<mat.nbCols() <<std::endl;
 
-    for(int i=0 ; i <= mat.getNbCols()*Matrix<T>::COUTWIDTH+1; ++i)
+    for(int i=0 ; i <= mat.nbCols()*Matrix<T>::COUTWIDTH+1; ++i)
             out <<"=";
     out <<std::endl;   
 
-    for(int i=0 ; i < mat.getNbRows(); ++i)
+    for(int i=0 ; i < mat.nbRows(); ++i)
     {
         out <<"|";
         out.width(Matrix<T>::COUTWIDTH);
         out <<mat(i, 0);
     
-        for(int j=1 ; j < mat.getNbCols(); ++j)
+        for(int j=1 ; j < mat.nbCols(); ++j)
         {
             out.width(Matrix<T>::COUTWIDTH);
             out << std::right <<mat(i,j);
