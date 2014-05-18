@@ -16,13 +16,21 @@ HEADERS := $(wildcard $(SRCDIR)/*.h)
 OBJ := $(SRC:.cpp=.o)
 #NDEBUG = RELEASE
 #-Wfatal-errors : le compilateur s'arrêtera à la 1ère erreur rencontrée (ici un simple warning)
-CXXFLAGS += -O3 -pipe -fopenmp -std=c++11 -fdiagnostics-color=auto
+CXXFLAGS += -O3 -pipe -fopenmp -std=c++11 
 CXX_RELEASE_FLAGS := -DNDEBUG  -march=native -fstack-protector --param=ssp-buffer-size=4
 CXX_DEBUG_FLAGS := -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual \
 	-Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual \
 	-Wunknown-pragmas -Wmissing-include-dirs -Winline -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel \
 	-Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror -Wconversion \
-	-Weffc++ -Wold-style-cast -Wcast-align -Wdouble-promotion -Wlogical-op 
+	-Weffc++ -Wold-style-cast -Wcast-align -Wdouble-promotion -Wlogical-op -Wfatal-errors
+
+GCC_VER_MAJOR := $(shell $(CC) -dumpversion | cut -f1 -d.)
+GCC_VER_MINOR := $(shell expr `$(CC) -dumpversion | cut -f2 -d.`)
+GCC_VER_GT_4_9 := $(shell test $(GCC_VER_MAJOR) -ge 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -ge 9 \) && echo true)
+
+ifeq ($(GCC_VER_GT_4_9),true)
+	CXXFLAGS += -fdiagnostics-color=auto
+endif
 
 #CFLAGS += -O3 -pedantic -Wall -Wextra -fopenmp $(shell pkg-config --cflags sdl SDL_image) -lSDL_image
 LDFLAGS += -fopenmp #-lm -lpthread -D_REENTRANT $(shell pkg-config --libs sdl) -lSDL_image 
