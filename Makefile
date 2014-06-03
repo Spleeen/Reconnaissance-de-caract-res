@@ -1,9 +1,9 @@
 # Makefile created by N.Richard
 # Cours : Intelligence Artificielle
-# Projet : Reconnaissance de caractères via un réseau de Hopfield
+# Projet : Reconnaissance de caractères via un réseau de neurones
 # Date de création : 4 janvier 2006
-# Date de version : 18 mai 2014
-# Version 2.2
+# Date de version : 2 juin 2014
+# Version 2.3
 
 CC := g++	
 PREFIX := .
@@ -16,13 +16,14 @@ HEADERS := $(wildcard $(SRCDIR)/*.h)
 OBJ := $(SRC:.cpp=.o)
 #NDEBUG = RELEASE
 #-Wfatal-errors : le compilateur s'arrêtera à la 1ère erreur rencontrée (ici un simple warning)
+#Volontairement omis pour des raisons de performances : -Wconversion -Winline -Wsign-compare (-Wall)
 CXXFLAGS += -O3 -pipe -fopenmp -std=c++11 
 CXX_RELEASE_FLAGS := -DNDEBUG  -march=native -fstack-protector --param=ssp-buffer-size=4
 CXX_DEBUG_FLAGS := -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual \
 	-Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual \
-	-Wunknown-pragmas -Wmissing-include-dirs -Winline -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel \
-	-Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror -Wconversion \
-	-Weffc++ -Wold-style-cast -Wcast-align -Wdouble-promotion -Wlogical-op -Wfatal-errors
+	-Wunknown-pragmas -Wmissing-include-dirs -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel \
+	-Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror  \
+	-Weffc++ -Wold-style-cast -Wcast-align -Wdouble-promotion -Wlogical-op -Wfatal-errors -Wno-sign-compare
 
 GCC_VER_MAJOR := $(shell $(CC) -dumpversion | cut -f1 -d.)
 GCC_VER_MINOR := $(shell $(CC) -dumpversion | cut -f2 -d.)

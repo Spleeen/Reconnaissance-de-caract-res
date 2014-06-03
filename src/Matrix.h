@@ -26,15 +26,23 @@ public:
     {
         if (nbrows <= 0 || nbcolumns <= 0)
             throw std::domain_error("Matrix can't have a zero size");
-        m_values = new T[nbrows * nbcolumns]();
+        m_values = new T[nbrows * nbcolumns];
     }
 
     Matrix(const Matrix& mat) : m_rows(mat.nbRows()), m_cols(mat.nbCols()), m_values(NULL)
     { 
-
         if (mat.m_values != NULL) {
                 m_values = new T[m_rows*m_cols]();
                 memcpy(m_values,mat.m_values, m_rows*m_cols * sizeof(T));
+        }
+    } 
+
+    Matrix(const T* tab, int nbrows, int nbcolumns) : m_rows(nbrows), m_cols(nbcolumns), m_values(NULL)
+    { 
+
+        if (tab != NULL) {
+                m_values = new T[m_rows*m_cols]();
+                memcpy(m_values, tab, m_rows*m_cols * sizeof(T));
         }
     } 
 
@@ -67,7 +75,7 @@ public:
 
         return true;
     }
-
+    
     bool operator!= (const Matrix& mat) const
     {
         return !(*this == mat);    
@@ -131,6 +139,23 @@ public:
         return addMat;
     }
 
+    Matrix sub(const Matrix& mat) const
+    {
+        if(m_cols != mat.m_cols || m_rows != mat.m_rows)
+            throw std::domain_error("Matrix type not compatible for substraction. Both matrices must have the same number of rows and columns"); 
+
+        Matrix subMat (m_rows, m_cols); 
+
+        #ifdef _OPENMP
+        #pragma omp parallel for
+        #endif //_OPENMP
+        for (int i = 0; i < m_rows; ++i)
+            for (int j = 0; j < m_cols; ++j)
+                subMat(i,j) = at(i,j) - mat(i,j);
+
+        return subMat;
+    }
+
     Matrix mult(const Matrix& mat) const
     {
         if(m_cols != mat.m_rows || m_rows != mat.m_cols)
@@ -147,7 +172,7 @@ public:
                     multMat(i,j) += at(i,k) * mat(k,j);
 
         return multMat;
-    }   
+    }
  
     template <typename NumericType> 
     Matrix mult (const NumericType scale) const
@@ -162,8 +187,8 @@ public:
                 multMat(i,j) += at(i,j) * scale;
 
         return multMat;  
-    }
-   
+    }  
+
     Matrix pow (const int p) const
     {  
         if(!isSquare())
@@ -307,12 +332,6 @@ public:
         return true;
     }
 
-    //Matrix display
-    void show () const
-    {
-        std::cout <<*this;    
-    }
-
     //Destructor
     ~Matrix()
     {
@@ -321,10 +340,9 @@ public:
 
     static int COUTWIDTH;
 
-private:
+protected:
     int m_rows, m_cols;
     T* m_values;
-
 };
 
 template<typename T>
@@ -378,6 +396,18 @@ Matrix<T>& operator+= (Matrix<T>& mat1, const Matrix<U>& mat2)
     return (mat1 = mat1.add(mat2));
 }
 
+template<typename T, typename U>
+Matrix<T> operator- (const Matrix<T>& mat1, const Matrix<U>& mat2)
+{
+    return mat1.sub(mat2);
+}
+
+template<typename T, typename U>
+Matrix<T>& operator-= (Matrix<T>& mat1, const Matrix<U>& mat2)
+{
+    return (mat1 = mat1.sub(mat2));
+}
+
 template <typename T>
 std::ostream& operator << (std::ostream& out, const Matrix<T>& mat)
 {
@@ -403,5 +433,8 @@ std::ostream& operator << (std::ostream& out, const Matrix<T>& mat)
 
     return out;
 }
+
+typedef Matrix<float> Matf;
+typedef Matrix<int> Mati;
 
 #endif //MATRIX_H
