@@ -2,7 +2,6 @@
 
 using namespace std; 
 
-
 /*****************************************
 	Gestion du temps (multiplateforme)
 *****************************************/

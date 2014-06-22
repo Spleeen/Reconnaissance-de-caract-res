@@ -2,7 +2,8 @@
 *   Created by N.Richard
 *   Date de création : 17 novembre 2013
 *   Date de version : 2 juin 2014
-*   Version : 1.3
+*   Version : 1.5
+*   Spécialement conçu pour l'OCR
 */
 
 #ifndef LAYER_H

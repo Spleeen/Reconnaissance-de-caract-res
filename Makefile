@@ -2,8 +2,8 @@
 # Cours : Intelligence Artificielle
 # Projet : Reconnaissance de caractères via un réseau de neurones
 # Date de création : 4 janvier 2006
-# Date de version : 2 juin 2014
-# Version 2.3
+# Date de version : 22 juin 2014
+# Version 2.4
 
 CC := g++	
 PREFIX := .
@@ -20,7 +20,7 @@ OBJ := $(SRC:.cpp=.o)
 CXXFLAGS += -O3 -pipe -fopenmp -std=c++11 
 CXX_RELEASE_FLAGS := -DNDEBUG  -march=native -fstack-protector --param=ssp-buffer-size=4
 CXX_DEBUG_FLAGS := -pedantic -Wall -Wno-narrowing -Wextra -Woverloaded-virtual \
-	-Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual \
+	-Wwrite-strings -Wno-variadic-macros -Wno-unused-parameter -Wno-unused-variable -Wvolatile-register-var -Wunsafe-loop-optimizations -Wcast-qual \
 	-Wunknown-pragmas -Wmissing-include-dirs -Wstack-protector -Wfloat-equal -Wstrict-null-sentinel \
 	-Wpointer-arith -Wredundant-decls -Winit-self -Wswitch-default -Wswitch-enum -Wundef -Wlong-long -Werror  \
 	-Weffc++ -Wold-style-cast -Wcast-align -Wdouble-promotion -Wlogical-op -Wfatal-errors -Wno-sign-compare
