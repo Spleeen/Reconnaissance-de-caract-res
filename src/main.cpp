@@ -67,7 +67,6 @@ int main(int argc, char* argv[])
         networks.push_back(newRN);    
     }
 
-    for (int nb = 0; nb < 10; ++nb){
     for (int i = 0; i < inputs_learning.size(); ++i)
     {
         for (int j = 0; j < networks.size(); ++j)
@@ -118,9 +117,9 @@ int main(int argc, char* argv[])
             
         }
     }
-}
+
     //Phase de test
-    for(vector<float> inputs : inputs_learning)
+    for(vector<float> inputs : inputs_test)
     {
         show (inputs, CHAR_LEN, CHAR_WIDTH);
         float proba_result = 0.f, ind_result;
