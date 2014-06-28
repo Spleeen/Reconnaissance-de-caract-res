@@ -17,7 +17,7 @@ void loadTest (const std::string filePath, vector<vector<float>>& matInputs, int
 void show (const vector<float>& mat, int nbrows, int nbcolumns);
 
 //Paramètres par défaut
-float PRECISION = 1e-6f;      // Précision pour la convergeance
+float PRECISION = 1e-4f;      // Précision pour la convergeance
 #define INPUTS_FILE_LEARNING ("./ressources/inputs_learning.txt")
 #define INPUTS_FILE_TEST ("./ressources/inputs_test.txt")
 #define CHAR_WIDTH 5
@@ -72,56 +72,58 @@ int main(int argc, char* argv[])
     }
 
 
-    for (int i = 0; i < inputs_learning.size(); ++i)
-    {
-        for (int j = 0; j < networks.size(); ++j)
+    for(int k=0 ; k<10 ; k++)
+        for (int i = 0; i < inputs_learning.size(); ++i)
         {
-
-            final_layer_value[0] = (j == results_learning[i])? 1 : 0;
-            //Autant de réseaux de neurones que de lettres à apprendre
-            for(int k=0 ; k<inputs_learning.size() ; k++)
-                randomIndexes[k] = k;
-
-            // Phase d'apprentissage
-            // Tant qu'on a au moins une erreur par cycle
-            do
+            for (int j = 0; j < networks.size(); ++j)
             {
-                networks[j]->error = 0.f;
-                //Permutation des données d'entrées
-                random_shuffle(randomIndexes.begin(), randomIndexes.end());
+                final_layer_value[0] = (j == results_learning[i])? 1 : 0;
+                //Autant de réseaux de neurones que de lettres à apprendre
+                //for(int k=0 ; k<inputs_learning.size() ; k++)
+                    //randomIndexes[k] = k;
 
-                // Pour chaque entrée de la base de données
-                for(int l : randomIndexes)
+                //cout << j << ' ' << final_layer_value[0] << endl;
+
+                // Phase d'apprentissage
+                // Tant qu'on a au moins une erreur par cycle
+                do
                 {
-                    //Propagation avant 1
-                    networks[l]->interLayer.process(inputs_learning[l]);
-                    //Propagation avant 2
-                    networks[l]->finalLayer.process(networks[l]->interLayer.results());
+                    networks[j]->error = 0.f;
+                    //Permutation des données d'entrées
+                    //random_shuffle(randomIndexes.begin(), randomIndexes.end());
 
-                    //Ajustement des poids synaptiques
-                    networks[l]->finalLayer.adjust(networks[l]->interLayer.results(), final_layer_value);
-                    networks[l]->interLayer.adjust(inputs_learning[l], networks[l]->finalLayer);
-          
-                    //On fait un cumul des erreurs E(h)
-                    networks[l]->error += networks[l]->finalLayer.error(final_layer_value);
+                    // Pour chaque entrée de la base de données
+                    //for(int l : randomIndexes)
+                    //{
+                        //Propagation avant 1
+                        networks[j]->interLayer.process(inputs_learning[i]);
+                        //Propagation avant 2
+                        networks[j]->finalLayer.process(networks[j]->interLayer.results());
+
+                        //Ajustement des poids synaptiques
+                        networks[j]->finalLayer.adjust(networks[j]->interLayer.results(), final_layer_value);
+                        networks[j]->interLayer.adjust(inputs_learning[i], networks[j]->finalLayer);
+              
+                        //On fait un cumul des erreurs E(h)
+                        networks[j]->error += networks[j]->finalLayer.error(final_layer_value);
+                    //}
+
+                    //Erreur totale moyenne
+                    networks[j]->error /= inputs_learning.size();
+
+                    //Pour ne pas en afficher trop
+                    //if(networks[j]->idRound % 1000 == 0)
+                      // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
+
+                    networks[j]->idRound++;
                 }
+                while(networks[j]->error > PRECISION);
 
-                //Erreur totale moyenne
-                networks[j]->error /= inputs_learning.size();
-
-                //Pour ne pas en afficher trop
-                //if(networks[j]->idRound % 1000 == 0)
-                  // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
-
-                networks[j]->idRound++;
+               // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
+                //cout <<"* Entrées --> résultat du perceptron : " <<endl;
+                
             }
-            while(networks[j]->error > PRECISION);
-
-           // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
-            //cout <<"* Entrées --> résultat du perceptron : " <<endl;
-            
         }
-    }
 
 
     for(vector<float> inputs : inputs_test)
