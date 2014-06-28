@@ -71,10 +71,10 @@ int main(int argc, char* argv[])
     }
 
 
-    for (int i = 0; i < inputs_learning.size(); ++i)
-    {
-        for (int j = 0; j < networks.size(); ++j)
+    for(int k=0 ; k<10 ; k++)
+        for (int i = 0; i < inputs_learning.size(); ++i)
         {
+<<<<<<< HEAD
 
             //Autant de réseaux de neurones que de lettres à apprendre
             for(int k=0 ; k<inputs_learning.size() ; k++)
@@ -83,14 +83,22 @@ int main(int argc, char* argv[])
             // Phase d'apprentissage
             // Tant qu'on a au moins une erreur par cycle
             do
+=======
+            for (int j = 0; j < networks.size(); ++j)
+>>>>>>> FETCH_HEAD
             {
-                networks[j]->error = 0.f;
-                //Permutation des données d'entrées
-                random_shuffle(randomIndexes.begin(), randomIndexes.end());
+                final_layer_value[0] = (j == results_learning[i])? 1 : 0;
+                //Autant de réseaux de neurones que de lettres à apprendre
+                //for(int k=0 ; k<inputs_learning.size() ; k++)
+                    //randomIndexes[k] = k;
 
-                // Pour chaque entrée de la base de données
-                for(int l : randomIndexes)
+                //cout << j << ' ' << final_layer_value[0] << endl;
+
+                // Phase d'apprentissage
+                // Tant qu'on a au moins une erreur par cycle
+                do
                 {
+<<<<<<< HEAD
                     final_layer_value[0] = (l == results_learning[l])? 1 : 0;
    
                     show (inputs_learning[l], CHAR_LEN, CHAR_WIDTH);
@@ -108,24 +116,44 @@ int main(int argc, char* argv[])
           
                     //On fait un cumul des erreurs E(h)
                     networks[l]->error += networks[l]->finalLayer.error(final_layer_value);
+=======
+                    networks[j]->error = 0.f;
+                    //Permutation des données d'entrées
+                    //random_shuffle(randomIndexes.begin(), randomIndexes.end());
+
+                    // Pour chaque entrée de la base de données
+                    //for(int l : randomIndexes)
+                    //{
+                        //Propagation avant 1
+                        networks[j]->interLayer.process(inputs_learning[i]);
+                        //Propagation avant 2
+                        networks[j]->finalLayer.process(networks[j]->interLayer.results());
+
+                        //Ajustement des poids synaptiques
+                        networks[j]->finalLayer.adjust(networks[j]->interLayer.results(), final_layer_value);
+                        networks[j]->interLayer.adjust(inputs_learning[i], networks[j]->finalLayer);
+              
+                        //On fait un cumul des erreurs E(h)
+                        networks[j]->error += networks[j]->finalLayer.error(final_layer_value);
+                    //}
+
+                    //Erreur totale moyenne
+                    networks[j]->error /= inputs_learning.size();
+
+                    //Pour ne pas en afficher trop
+                    //if(networks[j]->idRound % 1000 == 0)
+                      // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
+
+                    networks[j]->idRound++;
+>>>>>>> FETCH_HEAD
                 }
+                while(networks[j]->error > PRECISION);
 
-                //Erreur totale moyenne
-                networks[j]->error /= inputs_learning.size();
-
-                //Pour ne pas en afficher trop
-                //if(networks[j]->idRound % 1000 == 0)
-                  // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
-
-                networks[j]->idRound++;
+               // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
+                //cout <<"* Entrées --> résultat du perceptron : " <<endl;
+                
             }
-            while(networks[j]->error > PRECISION);
-
-           // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
-            //cout <<"* Entrées --> résultat du perceptron : " <<endl;
-            
         }
-    }
 
     cout <<"lol"<<endl;
     for(vector<float> inputs : inputs_test)
