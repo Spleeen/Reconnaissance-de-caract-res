@@ -17,7 +17,7 @@ void loadTest (const std::string filePath, vector<vector<float>>& matInputs, int
 void show (const vector<float>& mat, int nbrows, int nbcolumns);
 
 //Paramètres par défaut
-float PRECISION = 1e-6f;      // Précision pour la convergeance
+float PRECISION = 1e-4f;      // Précision pour la convergeance
 #define INPUTS_FILE_LEARNING ("./ressources/inputs_learning.txt")
 #define INPUTS_FILE_TEST ("./ressources/inputs_test.txt")
 #define CHAR_WIDTH 5
@@ -44,8 +44,7 @@ int main(int argc, char* argv[])
     {
         cout <<"* Utilisation d'un pas d'apprentissage de " <<Layer::STEP << " et d'une précision de "<<PRECISION << " (--help)" <<endl;
     }
-    else if (argc == 3 && from_string(argv[1],Layer::STEP) && from_string(argv[2], PRECISION)){}
-    else 
+    else if (argc != 3 || from_string(argv[1],Layer::STEP) || from_string(argv[2], PRECISION))
     {
         cout <<"Usage: neural-network PAS PRECISION" <<endl;
         cout <<"Veuillez indiquer le pas d'apprentissage (positive, souvent très proche de zéro) puis la précision (souvent très petite)" <<endl;
@@ -77,7 +76,6 @@ int main(int argc, char* argv[])
         for (int j = 0; j < networks.size(); ++j)
         {
 
-            final_layer_value[0] = (j == results_learning[i])? 1 : 0;
             //Autant de réseaux de neurones que de lettres à apprendre
             for(int k=0 ; k<inputs_learning.size() ; k++)
                 randomIndexes[k] = k;
@@ -93,6 +91,12 @@ int main(int argc, char* argv[])
                 // Pour chaque entrée de la base de données
                 for(int l : randomIndexes)
                 {
+                    final_layer_value[0] = (l == results_learning[l])? 1 : 0;
+   
+                    show (inputs_learning[l], CHAR_LEN, CHAR_WIDTH);
+
+                        cout << l <<" "<< i <<" " <<results_learning[l] <<" " <<final_layer_value[0] <<endl;
+                  
                     //Propagation avant 1
                     networks[l]->interLayer.process(inputs_learning[l]);
                     //Propagation avant 2
@@ -123,10 +127,10 @@ int main(int argc, char* argv[])
         }
     }
 
-
+    cout <<"lol"<<endl;
     for(vector<float> inputs : inputs_test)
     {
-        show (inputs, CHAR_LEN, CHAR_WIDTH);
+        //show (inputs, CHAR_LEN, CHAR_WIDTH);
         float proba_result = 0.f, ind_result;
         for (int i = 0; i < networks.size(); ++i)
         {
