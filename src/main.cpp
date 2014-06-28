@@ -74,18 +74,8 @@ int main(int argc, char* argv[])
     for(int k=0 ; k<10 ; k++)
         for (int i = 0; i < inputs_learning.size(); ++i)
         {
-<<<<<<< HEAD
-
-            //Autant de réseaux de neurones que de lettres à apprendre
-            for(int k=0 ; k<inputs_learning.size() ; k++)
-                randomIndexes[k] = k;
-
-            // Phase d'apprentissage
-            // Tant qu'on a au moins une erreur par cycle
-            do
-=======
             for (int j = 0; j < networks.size(); ++j)
->>>>>>> FETCH_HEAD
+
             {
                 final_layer_value[0] = (j == results_learning[i])? 1 : 0;
                 //Autant de réseaux de neurones que de lettres à apprendre
@@ -98,25 +88,6 @@ int main(int argc, char* argv[])
                 // Tant qu'on a au moins une erreur par cycle
                 do
                 {
-<<<<<<< HEAD
-                    final_layer_value[0] = (l == results_learning[l])? 1 : 0;
-   
-                    show (inputs_learning[l], CHAR_LEN, CHAR_WIDTH);
-
-                        cout << l <<" "<< i <<" " <<results_learning[l] <<" " <<final_layer_value[0] <<endl;
-                  
-                    //Propagation avant 1
-                    networks[l]->interLayer.process(inputs_learning[l]);
-                    //Propagation avant 2
-                    networks[l]->finalLayer.process(networks[l]->interLayer.results());
-
-                    //Ajustement des poids synaptiques
-                    networks[l]->finalLayer.adjust(networks[l]->interLayer.results(), final_layer_value);
-                    networks[l]->interLayer.adjust(inputs_learning[l], networks[l]->finalLayer);
-          
-                    //On fait un cumul des erreurs E(h)
-                    networks[l]->error += networks[l]->finalLayer.error(final_layer_value);
-=======
                     networks[j]->error = 0.f;
                     //Permutation des données d'entrées
                     //random_shuffle(randomIndexes.begin(), randomIndexes.end());
@@ -145,7 +116,7 @@ int main(int argc, char* argv[])
                       // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
 
                     networks[j]->idRound++;
->>>>>>> FETCH_HEAD
+
                 }
                 while(networks[j]->error > PRECISION);
 
