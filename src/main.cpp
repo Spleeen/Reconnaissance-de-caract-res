@@ -8,12 +8,16 @@
 using namespace std;
 using namespace Utilities;
 
+
+template <class T>
+struct DeleteFunctor : public std::unary_function<T*,void> { void operator() ( T* ptr) const { delete ptr;} };
+
 void loadLearningBase (const std::string filePath, vector<vector<float>>& matInputs, vector<float>& matResults, int nbrows, int nbcolumns);
 void loadTest (const std::string filePath, vector<vector<float>>& matInputs, int nbrows, int nbcolumns);
 void show (const vector<float>& mat, int nbrows, int nbcolumns);
 
 //Paramètres par défaut
-float PRECISION = 1e-5f;      // Précision pour la convergeance
+float PRECISION = 1e-6f;      // Précision pour la convergeance
 #define INPUTS_FILE_LEARNING ("./ressources/inputs_learning.txt")
 #define INPUTS_FILE_TEST ("./ressources/inputs_test.txt")
 #define CHAR_WIDTH 5
@@ -48,7 +52,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
     
-    vector<Network> networks;
+    vector<Network*> networks;
     //Chargement de la base d'apprentissage
     vector <vector<float> > inputs_learning;
     vector <vector<float> > inputs_test;
@@ -62,10 +66,11 @@ int main(int argc, char* argv[])
     //On crée autant de réseaux de neurones que de caractères à apprendre
     for (int i = 0; i < inputs_learning.size(); ++i)
     {
-        Network newRN (Layer(inputs_learning[0].size(), NUM_NEURON_INTER_LAYER),
+        Network* newRN = new Network(Layer(inputs_learning[0].size(), NUM_NEURON_INTER_LAYER),
                     Layer(NUM_NEURON_INTER_LAYER, 1));
         networks.push_back(newRN);    
     }
+
 
     for (int i = 0; i < inputs_learning.size(); ++i)
     {
@@ -81,7 +86,7 @@ int main(int argc, char* argv[])
             // Tant qu'on a au moins une erreur par cycle
             do
             {
-                networks[j].error = 0.f;
+                networks[j]->error = 0.f;
                 //Permutation des données d'entrées
                 random_shuffle(randomIndexes.begin(), randomIndexes.end());
 
@@ -89,28 +94,28 @@ int main(int argc, char* argv[])
                 for(int l : randomIndexes)
                 {
                     //Propagation avant 1
-                    networks[l].interLayer.process(inputs_learning[l]);
+                    networks[l]->interLayer.process(inputs_learning[l]);
                     //Propagation avant 2
-                    networks[l].finalLayer.process(networks[l].interLayer.results());
+                    networks[l]->finalLayer.process(networks[l]->interLayer.results());
 
                     //Ajustement des poids synaptiques
-                    networks[l].finalLayer.adjust(networks[l].interLayer.results(), final_layer_value);
-                    networks[l].interLayer.adjust(inputs_learning[l], networks[l].finalLayer);
+                    networks[l]->finalLayer.adjust(networks[l]->interLayer.results(), final_layer_value);
+                    networks[l]->interLayer.adjust(inputs_learning[l], networks[l]->finalLayer);
           
                     //On fait un cumul des erreurs E(h)
-                    networks[l].error += networks[l].finalLayer.error(final_layer_value);
+                    networks[l]->error += networks[l]->finalLayer.error(final_layer_value);
                 }
 
                 //Erreur totale moyenne
-                networks[j].error /= inputs_learning.size();
+                networks[j]->error /= inputs_learning.size();
 
                 //Pour ne pas en afficher trop
-                //if(idRound % 1000 == 0)
-                  //  cout << "Erreur : " << error << endl;
+                //if(networks[j]->idRound % 1000 == 0)
+                  // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
 
-                networks[j].idRound++;
+                networks[j]->idRound++;
             }
-            while(networks[j].error > PRECISION);
+            while(networks[j]->error > PRECISION);
 
            // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
             //cout <<"* Entrées --> résultat du perceptron : " <<endl;
@@ -118,24 +123,29 @@ int main(int argc, char* argv[])
         }
     }
 
-    //Phase de test
+
     for(vector<float> inputs : inputs_test)
     {
         show (inputs, CHAR_LEN, CHAR_WIDTH);
         float proba_result = 0.f, ind_result;
         for (int i = 0; i < networks.size(); ++i)
         {
-            networks[i].interLayer.process(inputs);
-            networks[i].finalLayer.process(networks[i].interLayer.results());
-            if (proba_result < networks[i].finalLayer.results()[0])
+            networks[i]->interLayer.process(inputs);
+            networks[i]->finalLayer.process(networks[i]->interLayer.results());
+            if (proba_result < networks[i]->finalLayer.results()[0])
             {
                 ind_result = i;
-                proba_result = networks[i].finalLayer.results()[0];
+                proba_result = networks[i]->finalLayer.results()[0];
             } 
-            cout << networks[i].finalLayer.results()[0]<<endl;
+            cout << networks[i]->finalLayer.results()[0]<<endl;
         }
         cout <<ind_result << " avec une probabilité de : " <<proba_result<<endl;
     }
+
+    std::for_each( networks.begin(), networks.end(), DeleteFunctor<Network>() );
+    // swap trick pour vider le vector et liberer la memoire
+    vector<Network*>().swap(networks);
+
     return 0;
 }
 
@@ -179,7 +189,7 @@ void loadLearningBase (const std::string filePath, vector<vector<float>>& matInp
         file.close();
     }
     catch (std::ifstream::failure e) {
-        std::cerr << "Exception opening/reading/closing file\n";
+        std::cerr << "Exception opening/reading/closing file : " <<filePath <<endl;
     }
 }
 
