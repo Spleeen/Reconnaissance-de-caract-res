@@ -4,6 +4,9 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#ifdef _OPENMP
+    #include <omp.h>
+#endif //_OPENMP
 
 using namespace std;
 using namespace Utilities;
@@ -15,14 +18,17 @@ struct DeleteFunctor : public std::unary_function<T*,void> { void operator() ( T
 void loadLearningBase (const std::string filePath, vector<vector<float>>& matInputs, vector<float>& matResults, int nbrows, int nbcolumns);
 void loadTest (const std::string filePath, vector<vector<float>>& matInputs, int nbrows, int nbcolumns);
 void show (const vector<float>& mat, int nbrows, int nbcolumns);
+void increase_noise (vector<vector<float>>& data, float sigma);
+
 
 //Paramètres par défaut
-float PRECISION = 1e-4f;      // Précision pour la convergeance
+float PRECISION = 1e-5;      // Précision pour la convergeance
+float NOISE = 0.05f;      //Pourcentage de bruit
 #define INPUTS_FILE_LEARNING ("./ressources/inputs_learning.txt")
 #define INPUTS_FILE_TEST ("./ressources/inputs_test.txt")
 #define CHAR_WIDTH 5
 #define CHAR_LEN 9
-#define NUM_NEURON_INTER_LAYER CHAR_WIDTH*CHAR_LEN
+int NUM_NEURON_INTER_LAYER = 5;
 
 
 class Network {
@@ -42,113 +48,142 @@ int main(int argc, char* argv[])
     //Prise en charge des paramètres d'entrés
     if(argc == 1)
     {
-        cout <<"* Utilisation d'un pas d'apprentissage de " <<Layer::STEP << " et d'une précision de "<<PRECISION << " (--help)" <<endl;
+        cout <<"* Utilisation d'un pas d'apprentissage de " <<Layer::STEP << ", d'une précision de "<<PRECISION << " et d'un bruit de " <<NOISE <<" (--help)" <<endl;
     }
-    else if (argc != 3 || from_string(argv[1],Layer::STEP) || from_string(argv[2], PRECISION))
+    else if (argc != 4 || !from_string(argv[1],Layer::STEP) || !from_string(argv[2], PRECISION) || !from_string(argv[3], NOISE))
     {
-        cout <<"Usage: neural-network PAS PRECISION" <<endl;
-        cout <<"Veuillez indiquer le pas d'apprentissage (positive, souvent très proche de zéro) puis la précision (souvent très petite)" <<endl;
+        cout <<"Usage: neural-network PAS PRECISION NOISE" <<endl;
+        cout <<"Veuillez indiquer le pas d'apprentissage (positive, souvent très proche de zéro), la précision (souvent très petite) et le pourcentage de bruit (entre 0 et 1)" <<endl;
         return EXIT_FAILURE;
     }
     
-    vector<Network*> networks;
-    //Chargement de la base d'apprentissage
-    vector <vector<float> > inputs_learning;
-    vector <vector<float> > inputs_test;
-    vector <float> results_learning;
-    loadLearningBase(INPUTS_FILE_LEARNING, inputs_learning, results_learning, CHAR_LEN, CHAR_WIDTH);
-    loadTest(INPUTS_FILE_TEST, inputs_test, CHAR_LEN, CHAR_WIDTH);
-    std::vector <float> final_layer_value (1);
+    //std::vector<float> proba_result (8);
 
-    vector<int> randomIndexes(inputs_learning.size());
-
-    //On crée autant de réseaux de neurones que de caractères à apprendre
-    for (int i = 0; i < inputs_learning.size(); ++i)
+    //for (int p = 0; p < 8; p++)
     {
-        Network* newRN = new Network(Layer(inputs_learning[0].size(), NUM_NEURON_INTER_LAYER),
-                    Layer(NUM_NEURON_INTER_LAYER, 1));
-        networks.push_back(newRN);    
-    }
 
+        vector<Network*> networks;
+        //Chargement de la base d'apprentissage
+        vector <vector<float> > inputs_learning;
+        vector <float> results_learning;
+        loadLearningBase(INPUTS_FILE_LEARNING, inputs_learning, results_learning, CHAR_LEN, CHAR_WIDTH);
+        //loadTest(INPUTS_FILE_TEST, inputs_test, CHAR_LEN, CHAR_WIDTH);
+        std::vector <float> final_layer_value (1);
 
-    for(int k=0 ; k<10 ; k++)
+        vector<int> randomIndexes(inputs_learning.size());
+
+        vector <vector<float> > inputs_test(inputs_learning);
+        increase_noise(inputs_test, NOISE);
+
+        //On crée autant de réseaux de neurones que de caractères à apprendre
         for (int i = 0; i < inputs_learning.size(); ++i)
         {
-            for (int j = 0; j < networks.size(); ++j)
+            Network* newRN = new Network(Layer(inputs_learning[0].size(), NUM_NEURON_INTER_LAYER),
+                        Layer(NUM_NEURON_INTER_LAYER, 1));
+            networks.push_back(newRN);    
+        }
 
+       
+        for(int k=0 ; k<10 ; k++)
+            for (int i = 0; i < inputs_learning.size(); ++i)
             {
-                final_layer_value[0] = (j == results_learning[i])? 1 : 0;
-                //Autant de réseaux de neurones que de lettres à apprendre
-                //for(int k=0 ; k<inputs_learning.size() ; k++)
-                    //randomIndexes[k] = k;
+                for (int j = 0; j < networks.size(); ++j)
 
-                //cout << j << ' ' << final_layer_value[0] << endl;
-
-                // Phase d'apprentissage
-                // Tant qu'on a au moins une erreur par cycle
-                do
                 {
-                    networks[j]->error = 0.f;
-                    //Permutation des données d'entrées
-                    //random_shuffle(randomIndexes.begin(), randomIndexes.end());
+                    final_layer_value[0] = (j == results_learning[i])? 1 : 0;
+                    //Autant de réseaux de neurones que de lettres à apprendre
+                    //for(int k=0 ; k<inputs_learning.size() ; k++)
+                        //randomIndexes[k] = k;
 
-                    // Pour chaque entrée de la base de données
-                    //for(int l : randomIndexes)
-                    //{
-                        //Propagation avant 1
-                        networks[j]->interLayer.process(inputs_learning[i]);
-                        //Propagation avant 2
-                        networks[j]->finalLayer.process(networks[j]->interLayer.results());
+                    //cout << j << ' ' << final_layer_value[0] << endl;
 
-                        //Ajustement des poids synaptiques
-                        networks[j]->finalLayer.adjust(networks[j]->interLayer.results(), final_layer_value);
-                        networks[j]->interLayer.adjust(inputs_learning[i], networks[j]->finalLayer);
-              
-                        //On fait un cumul des erreurs E(h)
-                        networks[j]->error += networks[j]->finalLayer.error(final_layer_value);
-                    //}
+                    // Phase d'apprentissage
+                    // Tant qu'on a au moins une erreur par cycle
+                    do
+                    {
+                        //Permutation des données d'entrées
+                        //random_shuffle(randomIndexes.begin(), randomIndexes.end());
 
-                    //Erreur totale moyenne
-                    networks[j]->error /= inputs_learning.size();
+                        // Pour chaque entrée de la base de données
+                        //for(int l : randomIndexes)
+                        //{
+                            //Propagation avant 1
+                            networks[j]->interLayer.process(inputs_learning[i]);
+                            //Propagation avant 2
+                            networks[j]->finalLayer.process(networks[j]->interLayer.results());
 
-                    //Pour ne pas en afficher trop
-                    //if(networks[j]->idRound % 1000 == 0)
-                      // cout << "Erreur : " << networks[j]->error << " "<<j <<endl;
+                            //Ajustement des poids synaptiques
+                            networks[j]->finalLayer.adjust(networks[j]->interLayer.results(), final_layer_value);
+                            networks[j]->interLayer.adjust(inputs_learning[i], networks[j]->finalLayer);
+                  
+                            //On fait un cumul des erreurs E(h)
+                            networks[j]->error = networks[j]->finalLayer.error(final_layer_value);
+                        //}
 
-                    networks[j]->idRound++;
+                        //Erreur totale moyenne
+                        //networks[j]->error /= inputs_learning.size();
 
+                        networks[j]->idRound++;
+                    }
+                    while(networks[j]->error > PRECISION);
+
+                   // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
+                    //cout <<"* Entrées --> résultat du perceptron : " <<endl;
+                    
                 }
-                while(networks[j]->error > PRECISION);
-
-               // cout <<"* Nombre d'itérations pour l'apprentissage : " <<idRound <<endl;
-                //cout <<"* Entrées --> résultat du perceptron : " <<endl;
-                
             }
-        }
 
-    cout <<"lol"<<endl;
-    for(vector<float> inputs : inputs_test)
-    {
-        //show (inputs, CHAR_LEN, CHAR_WIDTH);
-        float proba_result = 0.f, ind_result;
-        for (int i = 0; i < networks.size(); ++i)
+            float proba = 0.0;
+            int kl = 0;
+            int ind = 0;
+        for(vector<float> inputs : inputs_test)
         {
-            networks[i]->interLayer.process(inputs);
-            networks[i]->finalLayer.process(networks[i]->interLayer.results());
-            if (proba_result < networks[i]->finalLayer.results()[0])
+
+            show (inputs, CHAR_LEN, CHAR_WIDTH);
+            float current_proba = 0.0;
+            for (int i = 0; i < networks.size(); ++i)
             {
-                ind_result = i;
-                proba_result = networks[i]->finalLayer.results()[0];
-            } 
-            cout << networks[i]->finalLayer.results()[0]<<endl;
+                networks[i]->interLayer.process(inputs);
+                networks[i]->finalLayer.process(networks[i]->interLayer.results());
+
+                if (current_proba < networks[i]->finalLayer.results()[0] )
+                {
+                    current_proba = networks[i]->finalLayer.results()[0];
+                    //cout <<i<<"\t" <<current_proba<<endl;
+                    ind = i;
+                } 
+            }
+
+            if (ind == kl)
+            {
+                if (current_proba < 0.01)
+                {
+                    cout <<"\033[0;91mIl n'a pas réussi à déterminer le chiffre\e[0m" <<endl;
+                }
+                else if(current_proba < 0.5)
+                {
+                    cout <<"\033[0;33mIl hésite avec " << ind << " avec une probabilité de " << (int)(current_proba*100)<<"%\e[0m" <<endl; 
+                } 
+                else
+                {               //proba += current_proba; 
+                    cout <<"\033[0;92mTrouvé ! C'est " << ind << " avec une probabilité de " <<(int)(current_proba*100)<<"%\e[0m"<<endl; 
+                }
+            }  
+            else 
+                cout <<"\033[0;91mIl n'a pas réussi à déterminer le chiffre\e[0m" <<endl;
+            kl++;
         }
-        cout <<ind_result << " avec une probabilité de : " <<proba_result<<endl;
+        //proba_result[p] = proba / inputs_test.size();
+
+        std::for_each( networks.begin(), networks.end(), DeleteFunctor<Network>() );
+        // swap trick pour vider le vector et liberer la memoire
+        vector<Network*>().swap(networks);
     }
 
-    std::for_each( networks.begin(), networks.end(), DeleteFunctor<Network>() );
-    // swap trick pour vider le vector et liberer la memoire
-    vector<Network*>().swap(networks);
-
+   /* for (int m = 0; m < proba_result.size(); ++m)
+    {
+        cout <<proba_result[m]*100<<" "<<m <<endl;
+    }*/
     return 0;
 }
 
@@ -219,5 +254,22 @@ void loadTest (const std::string filePath, vector<vector<float>>& matInputs, int
     }
     catch (std::ifstream::failure e) {
         std::cerr << "Exception opening/reading/closing file\n";
+    }
+}
+
+void increase_noise (vector<vector<float>>& data, float sigma)
+{
+    std::default_random_engine generator ((unsigned int)time(0));
+    uniform_real_distribution<float> distribution(0.0,1.0);
+     
+    for (vector<float>& d : data)
+    {
+        for (float& e : d)
+        {
+            float random = distribution(generator);
+            if (random  < sigma){
+                e = 1;//(e == 1)? 0 : 1;
+            }
+        }    
     }
 }

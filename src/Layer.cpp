@@ -4,7 +4,7 @@
 
 using namespace std;
 
-float Layer::STEP = 0.1f;
+float Layer::STEP = 0.5f;
 
 //Constructeur de Couche
 Layer::Layer(int nbInputs, int nbOutput)

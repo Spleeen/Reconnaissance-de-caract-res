@@ -1,0 +1,2 @@
+ - Le pas n'a pas d'influence sur la reconnaissance
+ - Utilisé make && ./carac_recognize 0.5 0.00001 0.25 pendant la soutenance
