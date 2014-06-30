@@ -99,7 +99,9 @@ const std::vector<float>& Layer::results()
 //Fonction d'activation sygmoïde
 float Layer::activationFunction(float x)
 {
+    //return 2 / (1 + exp(-2 * x)) - 1;
     return 1.f / (1.f + exp(-x));
+    //return (exp (-x, 2)));
 }
 
 //Dérivée de la fonction d'activation sygmoïde

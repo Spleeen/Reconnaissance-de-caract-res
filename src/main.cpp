@@ -23,7 +23,7 @@ void increase_noise (vector<vector<float>>& data, float sigma);
 
 //Paramètres par défaut
 float PRECISION = 1e-5;      // Précision pour la convergeance
-float NOISE = 0.05f;      //Pourcentage de bruit
+float NOISE = 0.15f;      //Pourcentage de bruit
 #define INPUTS_FILE_LEARNING ("./ressources/inputs_learning.txt")
 #define INPUTS_FILE_TEST ("./ressources/inputs_test.txt")
 #define CHAR_WIDTH 5
@@ -156,11 +156,8 @@ int main(int argc, char* argv[])
 
             if (ind == kl)
             {
-                if (current_proba < 0.01)
-                {
-                    cout <<"\033[0;91mIl n'a pas réussi à déterminer le chiffre\e[0m" <<endl;
-                }
-                else if(current_proba < 0.5)
+                
+                if(current_proba < 0.5)
                 {
                     cout <<"\033[0;33mIl hésite avec " << ind << " avec une probabilité de " << (int)(current_proba*100)<<"%\e[0m" <<endl; 
                 } 
@@ -268,7 +265,7 @@ void increase_noise (vector<vector<float>>& data, float sigma)
         {
             float random = distribution(generator);
             if (random  < sigma){
-                e = 1;//(e == 1)? 0 : 1;
+                e = (e == 1)? 0 : 1;
             }
         }    
     }
