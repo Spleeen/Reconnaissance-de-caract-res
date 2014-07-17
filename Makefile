@@ -30,7 +30,7 @@ GCC_VER_MINOR := $(shell $(CC) -dumpversion | cut -f2 -d.)
 GCC_VER_GT_4_9 := $(shell test $(GCC_VER_MAJOR) -gt 4 -o \( $(GCC_VER_MAJOR) -eq 4 -a $(GCC_VER_MINOR) -ge 9 \) && echo true)
 
 ifeq ($(GCC_VER_GT_4_9),true)
-	CXXFLAGS += -fdiagnostics-color=auto
+	CXXFLAGS += -fdiagnostics-color=auto -fopenmp-simd
 endif
 
 #CFLAGS += -O3 -pedantic -Wall -Wextra -fopenmp $(shell pkg-config --cflags sdl SDL_image) -lSDL_image
